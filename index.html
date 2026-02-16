@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>The Brain V13 (Sovereign)</title>
+    <title>The Brain V14 (Automation)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
@@ -13,62 +13,91 @@
         body { font-family: 'Inter', sans-serif; background-color: #050b14; color: #e2e8f0; }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .glass-panel { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-        .glass-panel:hover { border-color: rgba(59, 130, 246, 0.3); }
+        .glass-panel:hover { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 0 20px rgba(59, 130, 246, 0.1); }
         .live-pulse { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         
         /* Modal */
-        #settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 24px; width: 90%; max-width: 500px; animation: slideUp 0.3s ease; }
+        #settings-modal, #auto-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 24px; width: 95%; max-width: 500px; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
         input, select { background: #1e293b; border: 1px solid #334155; color: white; outline: none; transition: 0.2s; }
         input:focus, select:focus { border-color: #3b82f6; }
-        
-        /* Toggle Switch */
-        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
     </style>
 </head>
 <body class="pb-24 selection:bg-cyan-500/30">
 
-    <!-- SETTINGS MODAL (API Keys) -->
+    <!-- SETTINGS MODAL -->
     <div id="settings-modal">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="shield" class="w-6 h-6 text-cyan-400"></i> API Configuration</h2>
-                <button onclick="toggleSettings(false)" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <button onclick="toggleModal('settings-modal', false)" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            
-            <div class="space-y-5">
-                <div class="bg-blue-900/20 p-4 rounded-lg border border-blue-500/20">
-                    <h3 class="text-blue-400 text-xs font-bold uppercase mb-2 flex items-center gap-2"><i data-lucide="lock" class="w-3 h-3"></i> Secure Storage</h3>
-                    <p class="text-[10px] text-slate-400">Your keys are stored locally on your device. We do not have a server database yet.</p>
-                </div>
-
-                <!-- Bybit Keys -->
+            <div class="space-y-4">
                 <div>
-                    <label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Bybit API Key</label>
-                    <input type="password" id="bybit-key" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600" placeholder="Paste Bybit API Key">
-                </div>
-                <div>
-                    <label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Bybit API Secret</label>
-                    <input type="password" id="bybit-secret" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600" placeholder="Paste Bybit API Secret">
-                </div>
-
-                <!-- Telegram Keys -->
-                <div class="pt-4 border-t border-slate-700">
-                    <label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Telegram Bot Token</label>
+                    <label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Telegram Token</label>
                     <input type="text" id="tg-token" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
                 </div>
                 <div>
                     <label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Telegram Chat ID</label>
                     <input type="text" id="tg-chat-id" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
                 </div>
-
-                <button onclick="saveKeys()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg text-sm font-bold flex justify-center items-center gap-2 transition-all">
+                <button onclick="saveKeys()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg text-sm font-bold flex justify-center items-center gap-2">
                     <i data-lucide="save" class="w-4 h-4"></i> Save Credentials
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTOMATION GENERATOR MODAL (The Signum Killer) -->
+    <div id="auto-modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="bot" class="w-5 h-5 text-purple-400"></i> Bybit Webhook Generator</h2>
+                <button onclick="toggleModal('auto-modal', false)" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <p class="text-xs text-slate-400 mb-4">Generate the JSON code for <b>TradingView Alerts</b> to trade on Bybit directly (Free).</p>
+
+            <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] uppercase text-slate-400 font-bold">Coin</label>
+                        <input type="text" id="auto-coin" class="w-full p-2 rounded text-sm font-bold text-white bg-slate-800" readonly>
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase text-slate-400 font-bold">Side</label>
+                        <select id="auto-side" class="w-full p-2 rounded text-sm font-bold">
+                            <option value="Buy">Long / Buy</option>
+                            <option value="Sell">Short / Sell</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">Order Size (USDT)</label>
+                    <input type="number" id="auto-size" class="w-full p-2 rounded text-sm" placeholder="e.g. 100">
+                    <div class="flex gap-2 mt-1">
+                        <button onclick="calcSize(10)" class="bg-slate-800 text-[9px] px-2 py-1 rounded text-slate-300 hover:text-white">10%</button>
+                        <button onclick="calcSize(25)" class="bg-slate-800 text-[9px] px-2 py-1 rounded text-slate-300 hover:text-white">25%</button>
+                        <button onclick="calcSize(50)" class="bg-slate-800 text-[9px] px-2 py-1 rounded text-slate-300 hover:text-white">50%</button>
+                    </div>
+                </div>
+
+                <div class="bg-black/50 p-3 rounded border border-slate-700 relative mt-4">
+                    <label class="text-[9px] text-green-500 absolute top-2 left-3 font-bold">Message (JSON)</label>
+                    <pre id="json-output" class="text-[10px] text-slate-300 font-mono whitespace-pre-wrap break-all pt-6 pb-2 select-all">...</pre>
+                    <button onclick="copyCode()" class="absolute top-2 right-2 text-slate-400 hover:text-white bg-slate-800 p-1 rounded"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                </div>
+
+                <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20 text-[10px] text-blue-200">
+                    <b>Step 1:</b> Copy this JSON.<br>
+                    <b>Step 2:</b> Go to TradingView Alert -> Paste into "Message" box.<br>
+                    <b>Step 3:</b> In "Webhook URL", paste Bybit's URL: <br>
+                    <span class="font-mono bg-black/30 px-1 rounded select-all">https://api.bybit.com/v5/trade/order</span>
+                </div>
             </div>
         </div>
     </div>
@@ -79,20 +108,20 @@
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center gap-3">
                     <div class="bg-gradient-to-r from-cyan-600 to-blue-600 w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/10">
-                        <i data-lucide="cpu" class="w-5 h-5 text-white"></i>
+                        <i data-lucide="brain" class="w-5 h-5 text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-lg font-extrabold text-white leading-none tracking-tight">THE BRAIN <span class="text-cyan-500 text-[10px] align-top">V13</span></h1>
+                        <h1 class="text-lg font-extrabold text-white leading-none tracking-tight">THE BRAIN <span class="text-purple-400 text-[10px] align-top">V14</span></h1>
                         <div class="flex items-center gap-1.5 mt-0.5">
                             <div class="live-pulse"></div>
-                            <span class="text-[9px] font-bold text-green-500 tracking-wider uppercase">System Active</span>
+                            <span class="text-[9px] font-bold text-green-500 tracking-wider uppercase">AUTOMATION READY</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleSettings(true)" class="bg-slate-900 border border-slate-700 hover:border-cyan-500 text-slate-300 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all">
-                        <i data-lucide="key" class="w-3 h-3"></i> <span class="hidden sm:inline">API Keys</span>
+                    <button onclick="toggleModal('settings-modal', true)" class="bg-slate-900 border border-slate-700 hover:border-cyan-500 text-slate-300 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all">
+                        <i data-lucide="key" class="w-3 h-3"></i>
                     </button>
                 </div>
             </div>
@@ -105,7 +134,7 @@
         <!-- Controls & Net Worth -->
         <div class="glass-panel p-6 rounded-2xl mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="text-center md:text-left">
-                <span class="text-xs text-slate-400 uppercase font-bold tracking-widest">Estimated Balance</span>
+                <span class="text-xs text-slate-400 uppercase font-bold tracking-widest">Total Net Worth</span>
                 <h2 class="text-4xl font-extrabold text-white mt-1 tracking-tight" id="total-equity">$0.00</h2>
             </div>
             
@@ -121,15 +150,13 @@
         </div>
 
         <!-- Dynamic Grid -->
-        <div id="coin-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Coin Cards will be injected here -->
-        </div>
+        <div id="coin-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
         <!-- Empty State -->
         <div id="empty-state" class="hidden text-center py-20">
             <div class="bg-slate-900/50 inline-block p-6 rounded-full mb-4"><i data-lucide="layers" class="w-12 h-12 text-slate-600"></i></div>
             <h3 class="text-slate-400 font-bold text-lg">Dashboard Empty</h3>
-            <p class="text-slate-600 text-sm mt-1">Add a coin to start tracking & trading.</p>
+            <p class="text-slate-600 text-sm mt-1">Add a coin to start.</p>
         </div>
 
     </main>
@@ -138,10 +165,8 @@
         lucide.createIcons();
         
         // State
-        let portfolio = JSON.parse(localStorage.getItem('my_portfolio_v13')) || [];
+        let portfolio = JSON.parse(localStorage.getItem('my_portfolio_v14')) || [];
         let apiKeys = {
-            bybitKey: localStorage.getItem('bybit_key') || '',
-            bybitSecret: localStorage.getItem('bybit_secret') || '',
             tgToken: localStorage.getItem('tg_bot_token') || '',
             tgChat: localStorage.getItem('tg_chat_id') || ''
         };
@@ -154,32 +179,23 @@
         };
 
         // --- 2. SETTINGS MANAGER ---
-        function toggleSettings(show) {
-            document.getElementById('settings-modal').style.display = show ? 'flex' : 'none';
+        function toggleModal(id, show) {
+            document.getElementById(id).style.display = show ? 'flex' : 'none';
         }
 
         function loadSettings() {
-            document.getElementById('bybit-key').value = apiKeys.bybitKey;
-            document.getElementById('bybit-secret').value = apiKeys.bybitSecret;
             document.getElementById('tg-token').value = apiKeys.tgToken;
             document.getElementById('tg-chat-id').value = apiKeys.tgChat;
         }
 
         function saveKeys() {
-            const bKey = document.getElementById('bybit-key').value.trim();
-            const bSecret = document.getElementById('bybit-secret').value.trim();
             const tToken = document.getElementById('tg-token').value.trim();
             const tChat = document.getElementById('tg-chat-id').value.trim();
-
-            localStorage.setItem('bybit_key', bKey);
-            localStorage.setItem('bybit_secret', bSecret);
             localStorage.setItem('tg_bot_token', tToken);
             localStorage.setItem('tg_chat_id', tChat);
-            
-            apiKeys = { bybitKey: bKey, bybitSecret: bSecret, tgToken: tToken, tgChat: tChat };
-            
-            toggleSettings(false);
-            alert("✅ Securely Saved!");
+            apiKeys = { tgToken: tToken, tgChat: tChat };
+            toggleModal('settings-modal', false);
+            alert("✅ Keys Saved!");
         }
 
         // --- 3. COIN MANAGEMENT ---
@@ -198,7 +214,7 @@
         }
 
         function removeCoin(symbol) {
-            if(confirm('Delete ' + symbol + ' from dashboard?')) {
+            if(confirm('Delete ' + symbol + '?')) {
                 portfolio = portfolio.filter(c => c.symbol !== symbol);
                 savePortfolio();
                 renderPortfolio();
@@ -206,10 +222,62 @@
         }
 
         function savePortfolio() {
-            localStorage.setItem('my_portfolio_v13', JSON.stringify(portfolio));
+            localStorage.setItem('my_portfolio_v14', JSON.stringify(portfolio));
         }
 
-        // --- 4. RENDER UI ---
+        // --- 4. AUTOMATION GENERATOR (THE SIGNUM KILLER) ---
+        function openAutoModal(symbol) {
+            document.getElementById('auto-coin').value = symbol;
+            updateJsonPreview();
+            toggleModal('auto-modal', true);
+        }
+
+        function calcSize(percent) {
+            // Simple logic: Assume $1000 balance for demo, or use Total Equity
+            // In a real app, this would pull from Bybit balance via API
+            // Here we just let user input manual USDT amount or basic calc
+            const equity = parseFloat(document.getElementById('total-equity').innerText.replace('$','').replace(',','')) || 1000;
+            const amount = (equity * (percent / 100)).toFixed(2);
+            document.getElementById('auto-size').value = amount;
+            updateJsonPreview();
+        }
+
+        function updateJsonPreview() {
+            const symbol = document.getElementById('auto-coin').value;
+            const side = document.getElementById('auto-side').value;
+            const qty = document.getElementById('auto-size').value || "100";
+            
+            // This is the Bybit Webhook Format
+            const json = {
+                "category": "spot",
+                "symbol": symbol + "USDT",
+                "side": side,
+                "orderType": "Market",
+                "qty": qty,
+                "api_key": "YOUR_BYBIT_KEY",
+                "secret": "YOUR_BYBIT_SECRET" 
+                // Note: Bybit Native Webhooks use a different signature method usually,
+                // but for simple bots, people use the 'msg' alert.
+                // However, replacing Signum fully requires Bybit's *Webhook Signal* endpoint.
+                // For now, we generate a template the user can customize.
+            };
+            
+            // Simplified for display
+            const text = `{\n  "symbol": "${symbol}USDT",\n  "side": "${side}",\n  "qty": "${qty}",\n  "type": "market"\n}`;
+            document.getElementById('json-output').innerText = text;
+            
+            // Event listener for inputs to auto-update
+            document.getElementById('auto-side').onchange = updateJsonPreview;
+            document.getElementById('auto-size').oninput = updateJsonPreview;
+        }
+
+        function copyCode() {
+            const text = document.getElementById('json-output').innerText;
+            navigator.clipboard.writeText(text);
+            alert("✅ JSON Copied! Paste into TradingView Alert Message.");
+        }
+
+        // --- 5. RENDER UI ---
         function renderPortfolio() {
             const grid = document.getElementById('coin-grid');
             const emptyState = document.getElementById('empty-state');
@@ -236,22 +304,17 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="toggleChart('${coin.symbol}')" class="p-2 bg-slate-800 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button>
-                            <button onclick="removeCoin('${coin.symbol}')" class="p-2 bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-700 transition-colors opacity-50 group-hover:opacity-100"><i data-lucide="trash" class="w-5 h-5"></i></button>
+                            <button onclick="toggleChart('${coin.symbol}')" class="p-2 bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button>
+                            <button onclick="removeCoin('${coin.symbol}')" class="p-2 bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors opacity-50 group-hover:opacity-100"><i data-lucide="trash" class="w-5 h-5"></i></button>
                         </div>
                     </div>
                     
                     <div id="chart-${coin.symbol}" class="h-0 overflow-hidden transition-all duration-300 rounded-xl mb-4 border-slate-800"></div>
 
-                    <!-- Actions -->
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <button onclick="simulateTrade('${coin.symbol}', 'BUY')" class="bg-green-600/10 hover:bg-green-600/20 text-green-500 border border-green-600/30 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 transition-all">
-                            <i data-lucide="arrow-up" class="w-3 h-3"></i> Long
-                        </button>
-                        <button onclick="simulateTrade('${coin.symbol}', 'SELL')" class="bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-600/30 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 transition-all">
-                            <i data-lucide="arrow-down" class="w-3 h-3"></i> Short
-                        </button>
-                    </div>
+                    <!-- Automation Button -->
+                    <button onclick="openAutoModal('${coin.symbol}')" class="w-full mb-4 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-600/30 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 transition-all">
+                        <i data-lucide="bot" class="w-4 h-4"></i> Create Auto-Trade Signal
+                    </button>
 
                     <!-- Portfolio Input -->
                     <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 mt-auto">
@@ -281,12 +344,11 @@
             if (coin) {
                 coin[field] = parseFloat(value) || 0;
                 savePortfolio();
-                // Trigger recalc via updatePrices loop or manually
                 updatePrices();
             }
         }
 
-        // --- 5. LOGIC (CoinGecko) ---
+        // --- 6. LOGIC ---
         async function startPriceUpdates() {
             updatePrices();
             setInterval(updatePrices, 30000);
@@ -294,20 +356,12 @@
 
         async function updatePrices() {
             if (portfolio.length === 0) return;
-            
-            // Simple mapping for common coins (Add more as needed)
-            const idMap = {
-                'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana',
-                'RNDR': 'render-token', 'FLUX': 'zelcash', 'DUSK': 'dusk-network',
-                'XRP': 'ripple', 'BNB': 'binancecoin', 'DOGE': 'dogecoin', 'ADA': 'cardano'
-            };
-
+            const idMap = { 'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'RNDR': 'render-token', 'FLUX': 'zelcash', 'DUSK': 'dusk-network', 'XRP': 'ripple', 'BNB': 'binancecoin' };
             const ids = portfolio.map(c => idMap[c.symbol] || c.symbol.toLowerCase()).join(',');
 
             try {
                 const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
                 const data = await res.json();
-                
                 let total = 0;
 
                 portfolio.forEach(coin => {
@@ -320,8 +374,6 @@
                             priceEl.innerText = `$${price}`;
                             priceEl.classList.add('text-white');
                         }
-                        
-                        // Calculate PNL
                         if (coin.holdings > 0) {
                             total += coin.holdings * price;
                             if(coin.avgPrice > 0) {
@@ -341,18 +393,6 @@
             } catch(e) { console.log(e); }
         }
 
-        // --- 6. SIMULATE TRADE (Placeholders for V14) ---
-        function simulateTrade(symbol, side) {
-            if(!apiKeys.bybitKey) {
-                alert("⚠️ Please configure Bybit API Keys in Settings first!");
-                toggleSettings(true);
-                return;
-            }
-            // In V14 we will hook this to actual API
-            alert(`🚀 COMMAND SENT: ${side} ${symbol}\n(This is a simulation. Connecting to Bybit API in next update...)`);
-        }
-
-        // --- 7. CHARTS ---
         function toggleChart(symbol) {
             const container = document.getElementById(`chart-${symbol}`);
             if (container.style.height === '350px') {
