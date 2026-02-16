@@ -4,86 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>The Brain V11 (Sniper)</title>
+    <title>The Brain V12</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #050b14; color: #e2e8f0; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .glass-panel { background: rgba(30, 41, 59, 0.3); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.3s ease; }
-        .glass-panel:hover { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 20px rgba(59, 130, 246, 0.1); }
-        .accent-rndr { border-left: 4px solid #3b82f6; }
-        .accent-flux { border-left: 4px solid #a855f7; }
-        .accent-dusk { border-left: 4px solid #f59e0b; }
+        .glass-panel { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
+        .glass-panel:hover { border-color: rgba(59, 130, 246, 0.3); }
         .live-pulse { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.5); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         
-        /* Modal & Overlay */
-        #settings-modal, #signal-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 100; backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; }
+        /* Modal */
+        #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-content { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 24px; width: 90%; max-width: 400px; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        input { background: #1e293b; border: 1px solid #334155; color: white; transition: all 0.2s; outline: none; }
-        input:focus { border-color: #3b82f6; background: #0f172a; }
+        input, select { background: #1e293b; border: 1px solid #334155; color: white; outline: none; transition: 0.2s; }
+        input:focus, select:focus { border-color: #3b82f6; }
     </style>
 </head>
 <body class="pb-24 selection:bg-cyan-500/30">
 
-    <!-- SETTINGS MODAL -->
-    <div id="settings-modal">
+    <!-- SIGNAL GENERATOR MODAL (For Signum) -->
+    <div id="modal-overlay">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="settings" class="w-5 h-5 text-cyan-400"></i> Settings</h2>
-                <button onclick="toggleModal('settings-modal')" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Telegram Token</label>
-                    <input type="text" id="input-token" class="w-full p-3 rounded-lg text-sm font-mono" placeholder="Bot Token">
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Chat ID</label>
-                    <input type="text" id="input-chat-id" class="w-full p-3 rounded-lg text-sm font-mono" placeholder="Chat ID">
-                </div>
-                <div class="pt-2 border-t border-slate-700 mt-2">
-                    <label class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Gemini API Key (For AI Analysis)</label>
-                    <input type="password" id="input-ai-key" class="w-full p-3 rounded-lg text-sm font-mono" placeholder="Gemini API Key (Optional)">
-                </div>
-                <button onclick="saveSettings()" class="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg mt-2 flex justify-center items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> Save Configuration
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SIGNAL BUILDER MODAL -->
-    <div id="signal-modal">
-        <div class="modal-content max-w-lg">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="crosshair" class="w-5 h-5 text-red-500"></i> Sniper Signal Builder</h2>
-                <button onclick="toggleModal('signal-modal')" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
-            <p class="text-xs text-slate-400 mb-4">Copy this code into TradingView Alerts to automate trading on Bybit.</p>
-            
-            <div class="bg-black/50 p-4 rounded-lg border border-slate-700 relative group">
-                <pre id="json-output" class="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all select-all">
-{
-  "action": "buy",
-  "symbol": "RNDRUSDT",
-  "price": "{{close}}",
-  "qty": "100",
-  "api_key": "YOUR_BYBIT_KEY"
-}</pre>
-                <button onclick="copySignal()" class="absolute top-2 right-2 bg-slate-800 p-1.5 rounded hover:bg-slate-700 text-white"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="code" class="w-5 h-5 text-purple-400"></i> Signum Generator</h2>
+                <button onclick="toggleModal(false)" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             
-            <div class="mt-4 flex gap-2">
-                <button class="flex-1 bg-slate-800 py-2 rounded text-xs text-white hover:bg-slate-700">Test Webhook</button>
-                <button onclick="toggleModal('signal-modal')" class="flex-1 bg-cyan-600 py-2 rounded text-xs text-white hover:bg-cyan-500">Done</button>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">Bot ID (From Signum)</label>
+                    <input type="text" id="sig-bot-id" class="w-full p-2 rounded text-sm" placeholder="e.g. ftv038Ap">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">Action</label>
+                    <select id="sig-action" class="w-full p-2 rounded text-sm">
+                        <option value="buy">Buy / Long</option>
+                        <option value="sell">Sell / Short</option>
+                        <option value="close">Close Position</option>
+                    </select>
+                </div>
+                
+                <div class="bg-black/50 p-3 rounded border border-slate-700 relative">
+                    <pre id="sig-output" class="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">...</pre>
+                    <button onclick="copySignal()" class="absolute top-2 right-2 text-slate-400 hover:text-white"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                </div>
+                <p class="text-[10px] text-slate-500">Paste this into TradingView Alert "Message" box.</p>
+                
+                <button onclick="generateJSON()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 rounded text-sm font-bold">Generate Code</button>
             </div>
         </div>
     </div>
@@ -93,316 +66,247 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center gap-3">
-                    <div class="bg-gradient-to-r from-cyan-500 to-blue-600 w-8 h-8 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-8 h-8 rounded-lg flex items-center justify-center">
                         <i data-lucide="brain" class="w-5 h-5 text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold text-white leading-none">The Brain <span class="text-cyan-400 text-xs align-top">v11</span></h1>
+                        <h1 class="text-lg font-bold text-white leading-none">The Brain <span class="text-purple-400 text-xs">V12</span></h1>
                         <div class="flex items-center gap-1.5 mt-0.5">
                             <div class="live-pulse"></div>
-                            <span class="text-[9px] font-bold text-green-500 tracking-wider">SNIPER ACTIVE</span>
+                            <span class="text-[9px] font-bold text-green-500 tracking-wider">COMMAND CENTER</span>
                         </div>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-3">
-                    <button onclick="testTelegramConnection()" class="hidden md:flex bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium transition items-center gap-2">
-                        <i data-lucide="send" class="w-3 h-3"></i> Test Alert
-                    </button>
-                    <button onclick="toggleModal('settings-modal')" class="p-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-600 rounded-lg transition-all">
-                        <i data-lucide="settings" class="w-5 h-5"></i>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleModal(true)" class="bg-slate-800 hover:bg-slate-700 text-purple-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-700 flex items-center gap-2">
+                        <i data-lucide="code" class="w-3 h-3"></i> Signum
                     </button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pb-12 space-y-8">
-
-        <!-- ASSET GRID -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-            <!-- RNDR CARD -->
-            <article class="glass-panel rounded-2xl p-5 accent-rndr flex flex-col relative overflow-hidden" data-coin="RNDR" data-coingecko="render-token">
-                <div class="absolute top-0 right-0 bg-blue-500/10 text-blue-400 text-[9px] font-bold px-3 py-1 rounded-bl-xl border-l border-b border-blue-500/20">HIGH CONVICTION</div>
-                
-                <div class="flex justify-between items-start mb-4 mt-2">
-                    <div>
-                        <h2 class="text-2xl font-bold text-white">RNDR</h2>
-                        <div class="text-3xl font-mono font-bold text-white live-price mt-1 tracking-tight">...</div>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <button onclick="openSignalBuilder('RNDR')" class="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 transition-all" title="Create Sniper Signal">
-                            <i data-lucide="crosshair" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Strategy Info -->
-                <div class="grid grid-cols-3 gap-2 mb-4 text-center">
-                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold">Buy Zone</div>
-                        <div class="text-green-400 font-bold text-xs">$1.95</div>
-                    </div>
-                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold">Sell Zone</div>
-                        <div class="text-blue-400 font-bold text-xs">$2.90</div>
-                    </div>
-                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold">Invalid</div>
-                        <div class="text-red-400 font-bold text-xs">$1.35</div>
-                    </div>
-                </div>
-
-                <!-- Chart -->
-                <div class="chart-container h-[250px] w-full rounded-xl overflow-hidden border border-slate-800 mb-4" id="chart-rndr"></div>
-
-                <!-- Alert Inputs -->
-                <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase">Local Alerts</span>
-                        <button onclick="analyzeAI('RNDR')" class="text-[10px] flex items-center gap-1 text-cyan-400 hover:text-white transition-colors">
-                            <i data-lucide="sparkles" class="w-3 h-3"></i> AI Analysis
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="number" id="buy-rndr" placeholder="Buy $" class="w-full p-2 text-xs rounded text-center font-bold text-green-400 border-slate-700 focus:border-green-500">
-                        <input type="number" id="sell-rndr" placeholder="Sell $" class="w-full p-2 text-xs rounded text-center font-bold text-red-400 border-slate-700 focus:border-red-500">
-                    </div>
-                    <div id="ai-output-rndr" class="hidden mt-3 p-2 bg-cyan-900/20 rounded border border-cyan-500/20 text-[10px] text-cyan-200 leading-relaxed"></div>
-                </div>
-            </article>
-
-            <!-- FLUX CARD -->
-            <article class="glass-panel rounded-2xl p-5 accent-flux flex flex-col relative overflow-hidden" data-coin="FLUX" data-coingecko="zelcash">
-                <div class="absolute top-0 right-0 bg-purple-500/10 text-purple-400 text-[9px] font-bold px-3 py-1 rounded-bl-xl border-l border-b border-purple-500/20">ASYMMETRIC</div>
-                
-                <div class="flex justify-between items-start mb-4 mt-2">
-                    <div>
-                        <h2 class="text-2xl font-bold text-white">FLUX</h2>
-                        <div class="text-3xl font-mono font-bold text-white live-price mt-1 tracking-tight">...</div>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <button onclick="openSignalBuilder('FLUX')" class="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 transition-all">
-                            <i data-lucide="crosshair" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 mb-4 text-center">
-                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold">Buy Zone</div>
-                        <div class="text-green-400 font-bold text-xs">$0.09</div>
-                    </div>
-                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold">Sell Zone</div>
-                        <div class="text-purple-400 font-bold text-xs">$0.30</div>
-                    </div>
-                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold">Invalid</div>
-                        <div class="text-red-400 font-bold text-xs">$0.08</div>
-                    </div>
-                </div>
-
-                <div class="chart-container h-[250px] w-full rounded-xl overflow-hidden border border-slate-800 mb-4" id="chart-flux"></div>
-
-                <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase">Local Alerts</span>
-                        <button onclick="analyzeAI('FLUX')" class="text-[10px] flex items-center gap-1 text-cyan-400 hover:text-white transition-colors">
-                            <i data-lucide="sparkles" class="w-3 h-3"></i> AI Analysis
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="number" id="buy-flux" placeholder="Buy $" class="w-full p-2 text-xs rounded text-center font-bold text-green-400 border-slate-700 focus:border-green-500">
-                        <input type="number" id="sell-flux" placeholder="Sell $" class="w-full p-2 text-xs rounded text-center font-bold text-red-400 border-slate-700 focus:border-red-500">
-                    </div>
-                    <div id="ai-output-flux" class="hidden mt-3 p-2 bg-cyan-900/20 rounded border border-cyan-500/20 text-[10px] text-cyan-200 leading-relaxed"></div>
-                </div>
-            </article>
-
-            <!-- DUSK CARD -->
-            <article class="glass-panel rounded-2xl p-5 accent-dusk flex flex-col relative overflow-hidden" data-coin="DUSK" data-coingecko="dusk-network">
-                <div class="absolute top-0 right-0 bg-amber-500/10 text-amber-400 text-[9px] font-bold px-3 py-1 rounded-bl-xl border-l border-b border-amber-500/20">MOONSHOT</div>
-                
-                <div class="flex justify-between items-start mb-4 mt-2">
-                    <div>
-                        <h2 class="text-2xl font-bold text-white">DUSK</h2>
-                        <div class="text-3xl font-mono font-bold text-white live-price mt-1 tracking-tight">...</div>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <button onclick="openSignalBuilder('DUSK')" class="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 transition-all">
-                            <i data-lucide="crosshair" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 mb-4 text-center">
-                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold">Buy Zone</div>
-                        <div class="text-green-400 font-bold text-xs">$0.14</div>
-                    </div>
-                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold">Sell Zone</div>
-                        <div class="text-amber-400 font-bold text-xs">$0.50</div>
-                    </div>
-                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold">Invalid</div>
-                        <div class="text-red-400 font-bold text-xs">$0.11</div>
-                    </div>
-                </div>
-
-                <div class="chart-container h-[250px] w-full rounded-xl overflow-hidden border border-slate-800 mb-4" id="chart-dusk"></div>
-
-                <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase">Local Alerts</span>
-                        <button onclick="analyzeAI('DUSK')" class="text-[10px] flex items-center gap-1 text-cyan-400 hover:text-white transition-colors">
-                            <i data-lucide="sparkles" class="w-3 h-3"></i> AI Analysis
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="number" id="buy-dusk" placeholder="Buy $" class="w-full p-2 text-xs rounded text-center font-bold text-green-400 border-slate-700 focus:border-green-500">
-                        <input type="number" id="sell-dusk" placeholder="Sell $" class="w-full p-2 text-xs rounded text-center font-bold text-red-400 border-slate-700 focus:border-red-500">
-                    </div>
-                    <div id="ai-output-dusk" class="hidden mt-3 p-2 bg-cyan-900/20 rounded border border-cyan-500/20 text-[10px] text-cyan-200 leading-relaxed"></div>
-                </div>
-            </article>
-
+    <!-- MAIN DASHBOARD -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pb-12">
+        
+        <!-- Total Equity -->
+        <div class="glass-panel p-6 rounded-2xl mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <span class="text-xs text-slate-400 uppercase font-bold tracking-widest">Total Net Worth</span>
+                <h2 class="text-4xl font-extrabold text-white mt-1" id="total-equity">$0.00</h2>
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="new-coin-input" placeholder="Add Coin (e.g. BTC)" class="bg-slate-900 border border-slate-700 text-white px-4 py-2 rounded-lg text-sm uppercase">
+                <button onclick="addCoin()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Add
+                </button>
+            </div>
         </div>
+
+        <!-- Dynamic Grid -->
+        <div id="coin-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Coins will appear here -->
+        </div>
+
     </main>
 
     <script>
         lucide.createIcons();
-        let interval;
-        let alerted = {};
-
-        // --- INIT CHARTS ---
-        function initCharts() {
-            createWidget('chart-rndr', 'BINANCE:RENDERUSDT');
-            createWidget('chart-flux', 'BINANCE:FLUXUSDT');
-            createWidget('chart-dusk', 'BINANCE:DUSKUSDT');
-        }
-
-        function createWidget(containerId, symbol) {
-            new TradingView.widget({
-                "autosize": true, "symbol": symbol, "interval": "D", "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "en", "toolbar_bg": "#f1f3f6", "enable_publishing": false, "hide_top_toolbar": true, "hide_legend": true, "container_id": containerId
-            });
-        }
-
-        // --- APP LOGIC ---
+        let portfolio = JSON.parse(localStorage.getItem('my_portfolio')) || [];
+        
+        // --- 1. INITIALIZE ---
         window.onload = function() {
-            initCharts();
-            startDataFetch();
-            loadSettings();
+            renderPortfolio();
+            startPriceUpdates();
         };
 
-        function startDataFetch() {
-            if (Notification.permission !== "granted") Notification.requestPermission();
-            restoreData();
-            updatePrices();
-            interval = setInterval(updatePrices, 30000);
-        }
-
-        function loadSettings() {
-            document.getElementById('input-token').value = localStorage.getItem('tg_bot_token') || '';
-            document.getElementById('input-chat-id').value = localStorage.getItem('tg_chat_id') || '';
-            document.getElementById('input-ai-key').value = localStorage.getItem('gemini_api_key') || '';
-        }
-
-        function saveSettings() {
-            localStorage.setItem('tg_bot_token', document.getElementById('input-token').value.trim());
-            localStorage.setItem('tg_chat_id', document.getElementById('input-chat-id').value.trim());
-            localStorage.setItem('gemini_api_key', document.getElementById('input-ai-key').value.trim());
-            alert("✅ Settings Saved!");
-            toggleModal('settings-modal');
-        }
-
-        function restoreData() {
-            document.querySelectorAll('input:not([id^="input-"])').forEach(input => {
-                const saved = localStorage.getItem('v11_' + input.id);
-                if (saved) input.value = saved;
-                input.addEventListener('input', () => localStorage.setItem('v11_' + input.id, input.value));
-            });
-        }
-
-        async function updatePrices() {
-            const articles = document.querySelectorAll('article');
-            const ids = Array.from(articles).map(a => a.dataset.coingecko).join(',');
-            try {
-                const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-                const data = await res.json();
-                articles.forEach(art => {
-                    const id = art.dataset.coingecko;
-                    const price = data[id]?.usd;
-                    if(price) {
-                        art.querySelector('.live-price').innerText = `$${price}`;
-                        checkAlerts(art, price);
-                    }
-                });
-            } catch(e) { console.log(e); }
-        }
-
-        function checkAlerts(art, price) {
-            const coin = art.dataset.coin.toLowerCase();
-            const buy = parseFloat(document.getElementById(`buy-${coin}`).value);
-            const sell = parseFloat(document.getElementById(`sell-${coin}`).value);
+        // --- 2. COIN MANAGEMENT ---
+        function addCoin() {
+            const input = document.getElementById('new-coin-input');
+            const symbol = input.value.toUpperCase().trim();
+            if (!symbol) return;
             
-            if(Date.now() - (alerted[coin]||0) < 900000) return;
+            // Prevent duplicates
+            if (!portfolio.find(c => c.symbol === symbol)) {
+                portfolio.push({ symbol: symbol, holdings: 0, avgPrice: 0 });
+                savePortfolio();
+                renderPortfolio();
+                updatePrices(); // Fetch price immediately
+            }
+            input.value = '';
+        }
 
-            let msg = "";
-            if(buy && price <= buy) msg = `🚨 SNIPER ENTRY: ${coin.toUpperCase()} hit $${price}`;
-            if(sell && price >= sell) msg = `💰 TAKE PROFIT: ${coin.toUpperCase()} hit $${price}`;
-
-            if(msg) {
-                sendTelegram(msg);
-                new Notification("Sniper Alert", { body: msg });
-                alerted[coin] = Date.now();
+        function removeCoin(symbol) {
+            if(confirm('Remove ' + symbol + '?')) {
+                portfolio = portfolio.filter(c => c.symbol !== symbol);
+                savePortfolio();
+                renderPortfolio();
             }
         }
 
-        function sendTelegram(msg) {
-            const t = localStorage.getItem('tg_bot_token');
-            const c = localStorage.getItem('tg_chat_id');
-            if(t && c) fetch(`https://api.telegram.org/bot${t}/sendMessage?chat_id=${c}&text=${encodeURIComponent(msg)}`, {mode:'no-cors'});
+        function savePortfolio() {
+            localStorage.setItem('my_portfolio', JSON.stringify(portfolio));
         }
 
-        function toggleModal(id) {
-            const modal = document.getElementById(id);
-            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        // --- 3. RENDER UI ---
+        function renderPortfolio() {
+            const grid = document.getElementById('coin-grid');
+            grid.innerHTML = '';
+
+            if (portfolio.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center text-slate-500 py-10">No coins added. Add a ticker above (e.g. BTC)</div>`;
+                return;
+            }
+
+            portfolio.forEach(coin => {
+                const card = document.createElement('article');
+                card.className = 'glass-panel rounded-2xl p-5 flex flex-col relative group';
+                card.setAttribute('data-symbol', coin.symbol);
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">${coin.symbol}</h3>
+                            <div class="text-xl font-mono text-slate-400 live-price" id="price-${coin.symbol}">...</div>
+                        </div>
+                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="toggleChart('${coin.symbol}')" class="p-2 bg-slate-800 rounded hover:text-blue-400"><i data-lucide="bar-chart-2" class="w-4 h-4"></i></button>
+                            <button onclick="removeCoin('${coin.symbol}')" class="p-2 bg-slate-800 rounded hover:text-red-400"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div id="chart-${coin.symbol}" class="h-0 overflow-hidden transition-all duration-300 rounded-lg mb-4 border-slate-700"></div>
+
+                    <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800 mt-auto">
+                        <div class="flex justify-between text-[10px] text-slate-500 uppercase font-bold mb-2">
+                            <span>Holdings</span>
+                            <span id="pnl-${coin.symbol}">PNL: $0.00</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" value="${coin.holdings}" onchange="updateHolding('${coin.symbol}', 'holdings', this.value)" placeholder="Qty" class="w-full p-2 text-sm rounded text-center">
+                            <input type="number" value="${coin.avgPrice}" onchange="updateHolding('${coin.symbol}', 'avgPrice', this.value)" placeholder="Avg $" class="w-full p-2 text-sm rounded text-center">
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
         }
 
-        // --- SNIPER BUILDER ---
-        function openSignalBuilder(coin) {
-            const output = document.getElementById('json-output');
-            const template = `{\n  "action": "buy",\n  "symbol": "${coin}USDT",\n  "price": "{{close}}",\n  "qty": "100",\n  "api_key": "BYBIT_KEY_HERE",\n  "secret": "BYBIT_SECRET_HERE"\n}`;
-            output.innerText = template;
-            toggleModal('signal-modal');
+        function updateHolding(symbol, field, value) {
+            const coin = portfolio.find(c => c.symbol === symbol);
+            if (coin) {
+                coin[field] = parseFloat(value) || 0;
+                savePortfolio();
+                calculateTotal();
+            }
+        }
+
+        // --- 4. PRICE UPDATES (CoinGecko) ---
+        async function startPriceUpdates() {
+            updatePrices();
+            setInterval(updatePrices, 30000);
+        }
+
+        async function updatePrices() {
+            if (portfolio.length === 0) return;
+            
+            // Map symbols to CoinGecko IDs (Simple mapping, can be expanded)
+            // For robustness, usually need a proper ID map. Using simple logic for demo:
+            // Assuming symbol matches ID for major coins, else basic search logic would be needed.
+            // Here we assume user enters valid symbols. We fetch common ones.
+            
+            // Note: In a real production app, we need a robust Symbol -> ID mapper. 
+            // For now, we will try to fetch prices using symbols as IDs (works for bitcoin, ethereum, solana, render-token, flux, dusk-network)
+            // Let's optimize: Just fetch a broad list or handle individually.
+            
+            // Hardcoded Map for accuracy for your favorites
+            const idMap = {
+                'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana',
+                'RNDR': 'render-token', 'FLUX': 'zelcash', 'DUSK': 'dusk-network',
+                'XRP': 'ripple', 'BNB': 'binancecoin', 'DOGE': 'dogecoin'
+            };
+
+            const ids = portfolio.map(c => idMap[c.symbol] || c.symbol.toLowerCase()).join(',');
+
+            try {
+                const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+                const data = await res.json();
+                
+                portfolio.forEach(coin => {
+                    const id = idMap[coin.symbol] || coin.symbol.toLowerCase();
+                    const price = data[id]?.usd;
+                    
+                    if (price) {
+                        document.getElementById(`price-${coin.symbol}`).innerText = `$${price}`;
+                        document.getElementById(`price-${coin.symbol}`).classList.add('text-white');
+                        
+                        // Calculate PNL
+                        if (coin.holdings > 0 && coin.avgPrice > 0) {
+                            const value = coin.holdings * price;
+                            const cost = coin.holdings * coin.avgPrice;
+                            const pnl = value - cost;
+                            const pnlEl = document.getElementById(`pnl-${coin.symbol}`);
+                            pnlEl.innerText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
+                            pnlEl.className = `text-xs font-bold ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+                        }
+                    }
+                });
+                calculateTotal(data, idMap);
+            } catch(e) { console.log(e); }
+        }
+
+        function calculateTotal(data, idMap) {
+            let total = 0;
+            portfolio.forEach(coin => {
+                const id = idMap[coin.symbol] || coin.symbol.toLowerCase();
+                const price = data && data[id] ? data[id].usd : 0;
+                if (price) total += coin.holdings * price;
+            });
+            document.getElementById('total-equity').innerText = `$${total.toFixed(2)}`;
+        }
+
+        // --- 5. SIGNUM GENERATOR ---
+        function toggleModal(show) {
+            document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function generateJSON() {
+            const botId = document.getElementById('sig-bot-id').value;
+            const action = document.getElementById('sig-action').value;
+            
+            // Signum Webhook Template
+            const json = {
+                "action": action,
+                "bot_id": botId,
+                "ticker": "{{ticker}}", 
+                "price": "{{close}}",
+                "timestamp": "{{time}}"
+            };
+            
+            document.getElementById('sig-output').innerText = JSON.stringify(json, null, 2);
         }
 
         function copySignal() {
-            const text = document.getElementById('json-output').innerText;
+            const text = document.getElementById('sig-output').innerText;
             navigator.clipboard.writeText(text);
-            alert("Code Copied! Paste this into TradingView Alert Webhook.");
+            alert("Code Copied!");
         }
 
-        // --- AI ANALYST (MOCK) ---
-        async function analyzeAI(coin) {
-            const key = localStorage.getItem('gemini_api_key');
-            const output = document.getElementById(`ai-output-${coin.toLowerCase()}`);
-            output.classList.remove('hidden');
-            output.innerHTML = `<span class="animate-pulse">🧠 Analyzing ${coin} market structure...</span>`;
-            
-            // Simulating analysis for now (Real API would go here if key exists)
-            setTimeout(() => {
-                output.innerHTML = `<b>AI Verdict:</b> ${coin} is showing strong accumulation. RSI is neutral. Watch for a breakout above resistance. Hold recommended.`;
-            }, 2000);
-        }
-
-        function testTelegramConnection() {
-            sendTelegram("✅ Sniper System Online. Ready to fire.");
-            alert("Test Signal Sent!");
+        // --- 6. CHART TOGGLE ---
+        function toggleChart(symbol) {
+            const container = document.getElementById(`chart-${symbol}`);
+            if (container.style.height === '350px') {
+                container.style.height = '0';
+                container.innerHTML = '';
+            } else {
+                container.style.height = '350px';
+                container.style.borderWidth = '1px';
+                new TradingView.widget({
+                    "autosize": true, "symbol": "BINANCE:" + symbol + "USDT", "interval": "D", "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "en", "toolbar_bg": "#f1f3f6", "enable_publishing": false, "hide_top_toolbar": true, "container_id": `chart-${symbol}`
+                });
+            }
         }
     </script>
 </body>
