@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>The Brain V14 (Automation)</title>
+    <title>The Brain V15 (Serverless)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
@@ -44,6 +44,16 @@
                     <label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Telegram Chat ID</label>
                     <input type="text" id="tg-chat-id" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
                 </div>
+                
+                <div class="pt-4 border-t border-slate-700">
+                    <label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Bybit API Key</label>
+                    <input type="password" id="bybit-key" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Bybit Secret</label>
+                    <input type="password" id="bybit-secret" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
+                </div>
+
                 <button onclick="saveKeys()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg text-sm font-bold flex justify-center items-center gap-2">
                     <i data-lucide="save" class="w-4 h-4"></i> Save Credentials
                 </button>
@@ -55,13 +65,14 @@
     <div id="auto-modal">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="bot" class="w-5 h-5 text-purple-400"></i> Bybit Webhook Generator</h2>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="bot" class="w-5 h-5 text-purple-400"></i> Auto-Trade Generator</h2>
                 <button onclick="toggleModal('auto-modal', false)" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             
-            <p class="text-xs text-slate-400 mb-4">Generate the JSON code for <b>TradingView Alerts</b> to trade on Bybit directly (Free).</p>
+            <p class="text-xs text-slate-400 mb-4">Copy these details into your <b>TradingView Alert</b> to trade automatically.</p>
 
-            <div class="space-y-3">
+            <div class="space-y-4">
+                <!-- Coin/Side -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="text-[10px] uppercase text-slate-400 font-bold">Coin</label>
@@ -76,9 +87,10 @@
                     </div>
                 </div>
 
+                <!-- Size -->
                 <div>
                     <label class="text-[10px] uppercase text-slate-400 font-bold">Order Size (USDT)</label>
-                    <input type="number" id="auto-size" class="w-full p-2 rounded text-sm" placeholder="e.g. 100">
+                    <input type="number" id="auto-size" class="w-full p-2 rounded text-sm" placeholder="e.g. 15">
                     <div class="flex gap-2 mt-1">
                         <button onclick="calcSize(10)" class="bg-slate-800 text-[9px] px-2 py-1 rounded text-slate-300 hover:text-white">10%</button>
                         <button onclick="calcSize(25)" class="bg-slate-800 text-[9px] px-2 py-1 rounded text-slate-300 hover:text-white">25%</button>
@@ -86,17 +98,20 @@
                     </div>
                 </div>
 
-                <div class="bg-black/50 p-3 rounded border border-slate-700 relative mt-4">
-                    <label class="text-[9px] text-green-500 absolute top-2 left-3 font-bold">Message (JSON)</label>
-                    <pre id="json-output" class="text-[10px] text-slate-300 font-mono whitespace-pre-wrap break-all pt-6 pb-2 select-all">...</pre>
-                    <button onclick="copyCode()" class="absolute top-2 right-2 text-slate-400 hover:text-white bg-slate-800 p-1 rounded"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                <!-- Webhook URL Display -->
+                <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20">
+                    <label class="text-[9px] uppercase text-blue-400 font-bold block mb-1">1. Webhook URL (Paste this in TradingView)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="webhook-url-display" class="w-full p-1.5 text-[10px] bg-black/30 rounded text-slate-300 font-mono select-all" readonly>
+                        <button onclick="copyToClip('webhook-url-display')" class="bg-blue-600 px-2 rounded text-white hover:bg-blue-500"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                    </div>
                 </div>
 
-                <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20 text-[10px] text-blue-200">
-                    <b>Step 1:</b> Copy this JSON.<br>
-                    <b>Step 2:</b> Go to TradingView Alert -> Paste into "Message" box.<br>
-                    <b>Step 3:</b> In "Webhook URL", paste Bybit's URL: <br>
-                    <span class="font-mono bg-black/30 px-1 rounded select-all">https://api.bybit.com/v5/trade/order</span>
+                <!-- JSON Message Display -->
+                <div class="bg-black/50 p-3 rounded border border-slate-700 relative">
+                    <label class="text-[9px] text-green-500 absolute top-2 left-3 font-bold">2. Message (Paste this in TradingView)</label>
+                    <pre id="json-output" class="text-[10px] text-slate-300 font-mono whitespace-pre-wrap break-all pt-6 pb-2 select-all">...</pre>
+                    <button onclick="copyCode()" class="absolute top-2 right-2 text-slate-400 hover:text-white bg-slate-800 p-1 rounded"><i data-lucide="copy" class="w-3 h-3"></i></button>
                 </div>
             </div>
         </div>
@@ -111,10 +126,10 @@
                         <i data-lucide="brain" class="w-5 h-5 text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-lg font-extrabold text-white leading-none tracking-tight">THE BRAIN <span class="text-purple-400 text-[10px] align-top">V14</span></h1>
+                        <h1 class="text-lg font-extrabold text-white leading-none tracking-tight">THE BRAIN <span class="text-purple-400 text-[10px] align-top">V15</span></h1>
                         <div class="flex items-center gap-1.5 mt-0.5">
                             <div class="live-pulse"></div>
-                            <span class="text-[9px] font-bold text-green-500 tracking-wider uppercase">AUTOMATION READY</span>
+                            <span class="text-[9px] font-bold text-green-500 tracking-wider uppercase">SERVERLESS</span>
                         </div>
                     </div>
                 </div>
@@ -168,7 +183,9 @@
         let portfolio = JSON.parse(localStorage.getItem('my_portfolio_v14')) || [];
         let apiKeys = {
             tgToken: localStorage.getItem('tg_bot_token') || '',
-            tgChat: localStorage.getItem('tg_chat_id') || ''
+            tgChat: localStorage.getItem('tg_chat_id') || '',
+            bybitKey: localStorage.getItem('bybit_key') || '',
+            bybitSecret: localStorage.getItem('bybit_secret') || ''
         };
 
         // --- 1. INITIALIZE ---
@@ -186,14 +203,22 @@
         function loadSettings() {
             document.getElementById('tg-token').value = apiKeys.tgToken;
             document.getElementById('tg-chat-id').value = apiKeys.tgChat;
+            document.getElementById('bybit-key').value = apiKeys.bybitKey;
+            document.getElementById('bybit-secret').value = apiKeys.bybitSecret;
         }
 
         function saveKeys() {
             const tToken = document.getElementById('tg-token').value.trim();
             const tChat = document.getElementById('tg-chat-id').value.trim();
+            const bKey = document.getElementById('bybit-key').value.trim();
+            const bSecret = document.getElementById('bybit-secret').value.trim();
+
             localStorage.setItem('tg_bot_token', tToken);
             localStorage.setItem('tg_chat_id', tChat);
-            apiKeys = { tgToken: tToken, tgChat: tChat };
+            localStorage.setItem('bybit_key', bKey);
+            localStorage.setItem('bybit_secret', bSecret);
+
+            apiKeys = { tgToken: tToken, tgChat: tChat, bybitKey: bKey, bybitSecret: bSecret };
             toggleModal('settings-modal', false);
             alert("✅ Keys Saved!");
         }
@@ -225,17 +250,27 @@
             localStorage.setItem('my_portfolio_v14', JSON.stringify(portfolio));
         }
 
-        // --- 4. AUTOMATION GENERATOR (THE SIGNUM KILLER) ---
+        // --- 4. AUTOMATION GENERATOR (THE MAGIC) ---
         function openAutoModal(symbol) {
             document.getElementById('auto-coin').value = symbol;
+            
+            // Generate Dynamic Webhook URL based on where the app is hosted
+            const currentUrl = window.location.origin;
+            const webhookUrl = currentUrl + "/.netlify/functions/trade";
+            document.getElementById('webhook-url-display').value = webhookUrl;
+
             updateJsonPreview();
             toggleModal('auto-modal', true);
         }
 
+        function copyToClip(id) {
+            const el = document.getElementById(id);
+            el.select();
+            document.execCommand('copy');
+            alert("Copied!");
+        }
+
         function calcSize(percent) {
-            // Simple logic: Assume $1000 balance for demo, or use Total Equity
-            // In a real app, this would pull from Bybit balance via API
-            // Here we just let user input manual USDT amount or basic calc
             const equity = parseFloat(document.getElementById('total-equity').innerText.replace('$','').replace(',','')) || 1000;
             const amount = (equity * (percent / 100)).toFixed(2);
             document.getElementById('auto-size').value = amount;
@@ -245,26 +280,18 @@
         function updateJsonPreview() {
             const symbol = document.getElementById('auto-coin').value;
             const side = document.getElementById('auto-side').value;
-            const qty = document.getElementById('auto-size').value || "100";
+            const qty = document.getElementById('auto-size').value || "10";
             
-            // This is the Bybit Webhook Format
+            // The Secure Payload for our Netlify Function
             const json = {
-                "category": "spot",
                 "symbol": symbol + "USDT",
                 "side": side,
-                "orderType": "Market",
                 "qty": qty,
-                "api_key": "YOUR_BYBIT_KEY",
-                "secret": "YOUR_BYBIT_SECRET" 
-                // Note: Bybit Native Webhooks use a different signature method usually,
-                // but for simple bots, people use the 'msg' alert.
-                // However, replacing Signum fully requires Bybit's *Webhook Signal* endpoint.
-                // For now, we generate a template the user can customize.
+                "api_key": apiKeys.bybitKey || "YOUR_KEY_HERE",
+                "secret": apiKeys.bybitSecret || "YOUR_SECRET_HERE"
             };
             
-            // Simplified for display
-            const text = `{\n  "symbol": "${symbol}USDT",\n  "side": "${side}",\n  "qty": "${qty}",\n  "type": "market"\n}`;
-            document.getElementById('json-output').innerText = text;
+            document.getElementById('json-output').innerText = JSON.stringify(json, null, 2);
             
             // Event listener for inputs to auto-update
             document.getElementById('auto-side').onchange = updateJsonPreview;
