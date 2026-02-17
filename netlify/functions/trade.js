@@ -1,49 +1,46 @@
 const crypto = require('crypto');
 
 exports.handler = async function(event, context) {
-    // 1. Only allow POST requests
     if (event.httpMethod !== "POST") {
         return { statusCode: 405, body: "Method Not Allowed" };
     }
 
     try {
-        // 2. Parse Data
         const data = JSON.parse(event.body);
         const { symbol, side, qty, api_key, secret } = data;
 
         if (!api_key || !secret) {
-            return { statusCode: 400, body: "Missing API Keys in Payload" };
+            return { statusCode: 400, body: "Missing API Keys" };
         }
 
-        console.log(`🚀 Signal Received: ${side} ${symbol} ${qty}`);
+        console.log(`🚀 Signal: ${side} ${symbol} $${qty}`);
 
-        // 3. Prepare Bybit Order
         const timestamp = Date.now().toString();
         const recvWindow = "5000";
-        const sideCapitalized = side.charAt(0).toUpperCase() + side.slice(1).toLowerCase(); // 'Buy' or 'Sell'
+        // 'Buy' හෝ 'Sell' අකුරු නිවැරදි කිරීම
+        const sideCap = side.charAt(0).toUpperCase() + side.slice(1).toLowerCase(); 
         
         let payload = {
             category: "spot",
             symbol: symbol,
-            side: sideCapitalized,
+            side: sideCap,
             orderType: "Market",
             qty: qty.toString(),
         };
 
-        // FIX: If Buying, tell Bybit that 'qty' is in USDT (Quote Coin), not BTC
-        if (sideCapitalized === 'Buy') {
+        // 🔥 CRITICAL FIX: Tell Bybit this quantity is in USDT (Quote Currency)
+        // Buy කරන විට පමණක් මෙය අවශ්‍ය වේ.
+        if (sideCap === 'Buy') {
             payload.marketUnit = 'quoteCoin';
         }
 
         const bodyStr = JSON.stringify(payload);
         
-        // 4. Create Signature
         const signature = crypto
             .createHmac("sha256", secret)
             .update(timestamp + api_key + recvWindow + bodyStr)
             .digest("hex");
 
-        // 5. Send to Bybit
         const response = await fetch("https://api.bybit.com/v5/order/create", {
             method: "POST",
             headers: {
@@ -67,3 +64,5 @@ exports.handler = async function(event, context) {
 
     } catch (e) {
         return { statusCode: 500, body: `Server Error: ${e.message}` };
+    }
+};
