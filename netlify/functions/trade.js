@@ -16,8 +16,9 @@ exports.handler = async function(event, context) {
         console.log(`🚀 Signal: ${side} ${symbol} $${qty}`);
 
         const timestamp = Date.now().toString();
-        const recvWindow = "5000";
-        // 'Buy' හෝ 'Sell' අකුරු නිවැරදි කිරීම
+        // UPDATED: Increased time window to 20 seconds to prevent "Time Drift" errors
+        const recvWindow = "20000"; 
+        
         const sideCap = side.charAt(0).toUpperCase() + side.slice(1).toLowerCase(); 
         
         let payload = {
@@ -28,8 +29,7 @@ exports.handler = async function(event, context) {
             qty: qty.toString(),
         };
 
-        // 🔥 CRITICAL FIX: Tell Bybit this quantity is in USDT (Quote Currency)
-        // Buy කරන විට පමණක් මෙය අවශ්‍ය වේ.
+        // Ensure USDT buying works correctly
         if (sideCap === 'Buy') {
             payload.marketUnit = 'quoteCoin';
         }
