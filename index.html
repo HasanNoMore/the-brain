@@ -374,7 +374,46 @@
                 updatePrices();
             }
         }
+// FIX: If Buying, tell Bybit that 'qty' is in USDT (Quote Coin), not BTC
+        if (sideCapitalized === 'Buy') {
+            payload.marketUnit = 'quoteCoin';
+        }
+        // 👆👆 මෙතනින් ඉවරයි 👆👆
 
+        const bodyStr = JSON.stringify(payload);
+        
+        // 4. Create Signature
+        const signature = crypto
+            .createHmac("sha256", secret)
+            .update(timestamp + api_key + recvWindow + bodyStr)
+            .digest("hex");
+
+        // 5. Send to Bybit
+        const response = await fetch("https://api.bybit.com/v5/order/create", {
+            method: "POST",
+            headers: {
+                "X-BAPI-API-KEY": api_key,
+                "X-BAPI-SIGN": signature,
+                "X-BAPI-TIMESTAMP": timestamp,
+                "X-BAPI-RECV-WINDOW": recvWindow,
+                "Content-Type": "application/json"
+            },
+            body: bodyStr
+        });
+
+        const result = await response.json();
+        console.log("Bybit Response:", result);
+
+        if (result.retCode === 0) {
+            return { statusCode: 200, body: `✅ Success! Order ID: ${result.result.orderId}` };
+        } else {
+            return { statusCode: 400, body: `❌ Bybit Error: ${result.retMsg}` };
+        }
+
+    } catch (e) {
+        return { statusCode: 500, body: `Server Error: ${e.message}` };
+    }
+};
         // --- 6. LOGIC ---
         async function startPriceUpdates() {
             updatePrices();
