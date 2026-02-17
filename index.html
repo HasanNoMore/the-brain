@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="si">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>The Brain V16 (Cleaned)</title>
+    <title>The Brain V17 (Connected)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
@@ -13,74 +13,122 @@
         body { font-family: 'Inter', sans-serif; background-color: #050b14; color: #e2e8f0; }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .glass-panel { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
+        .glass-panel:hover { border-color: rgba(6, 182, 212, 0.3); transform: translateY(-2px); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); }
         .live-pulse { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         #settings-modal, #auto-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 24px; width: 95%; max-width: 500px; }
+        .modal-content { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 24px; width: 95%; max-width: 500px; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         input, select { background: #1e293b; border: 1px solid #334155; color: white; outline: none; transition: 0.2s; }
-        input:focus, select:focus { border-color: #3b82f6; }
-        .chart-wrapper { height: 0; overflow: hidden; transition: all 0.3s; }
+        input:focus, select:focus { border-color: #06b6d4; box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2); }
+        .chart-wrapper { height: 0; overflow: hidden; transition: all 0.3s ease-in-out; }
         .chart-wrapper.active { height: 350px; margin-top: 1rem; border-radius: 12px; border: 1px solid #1e293b; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050b14; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="pb-24 selection:bg-cyan-500/30">
+<body class="pb-32 selection:bg-cyan-500/30">
 
     <!-- SETTINGS MODAL -->
     <div id="settings-modal">
-        <div class="modal-content">
+        <div class="modal-content border-t-4 border-t-cyan-500">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="shield" class="w-6 h-6 text-cyan-400"></i> API Settings</h2>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i data-lucide="shield" class="w-6 h-6 text-cyan-400"></i> 
+                    Connection Center
+                </h2>
                 <button onclick="toggleModal('settings-modal', false)" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            <div class="space-y-4">
-                <div><label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Telegram Token</label><input type="text" id="tg-token" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600"></div>
-                <div><label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Chat ID</label><input type="text" id="tg-chat-id" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600"></div>
-                <div class="pt-4 border-t border-slate-700">
-                    <label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Bybit API Key</label><input type="password" id="bybit-key" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
+            
+            <div class="space-y-5">
+                <!-- Telegram Section -->
+                <div class="bg-blue-900/10 p-4 rounded-xl border border-blue-500/20">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-xs uppercase text-blue-400 font-bold flex items-center gap-2"><i data-lucide="send" class="w-3 h-3"></i> Telegram Bot</label>
+                        <span id="tg-status" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">Not Tested</span>
+                    </div>
+                    <div class="space-y-3">
+                        <input type="password" id="tg-token" placeholder="Bot Token (e.g. 123:ABC...)" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
+                        <input type="text" id="tg-chat-id" placeholder="Chat ID (e.g. -100...)" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
+                        <button onclick="testTelegram()" class="w-full py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs font-bold rounded border border-blue-600/30 transition-all">Test Connection</button>
+                    </div>
                 </div>
-                <div><label class="text-[10px] uppercase text-slate-400 font-bold block mb-1">Bybit Secret</label><input type="password" id="bybit-secret" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600"></div>
-                <button onclick="saveKeys()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg text-sm font-bold flex justify-center items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Save Credentials</button>
+
+                <!-- Bybit Section -->
+                <div class="pt-2 border-t border-slate-700/50">
+                    <label class="text-[10px] uppercase text-slate-400 font-bold block mb-2">Bybit API (For JSON Gen)</label>
+                    <div class="space-y-3">
+                        <input type="password" id="bybit-key" placeholder="API Key" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
+                        <input type="password" id="bybit-secret" placeholder="API Secret" class="w-full p-3 rounded-lg text-sm font-mono placeholder-slate-600">
+                    </div>
+                </div>
+
+                <button onclick="saveKeys()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg text-sm font-bold flex justify-center items-center gap-2 shadow-lg shadow-cyan-500/20 transition-all">
+                    <i data-lucide="save" class="w-4 h-4"></i> Save Credentials
+                </button>
             </div>
         </div>
     </div>
 
     <!-- AUTO-TRADE MODAL -->
     <div id="auto-modal">
-        <div class="modal-content">
+        <div class="modal-content border-t-4 border-t-purple-500">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="bot" class="w-5 h-5 text-purple-400"></i> Signal Generator</h2>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="zap" class="w-5 h-5 text-purple-400"></i> 
+                    Signal Generator
+                </h2>
                 <button onclick="toggleModal('auto-modal', false)" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            <p class="text-xs text-slate-400 mb-4">Copy these to TradingView Alert.</p>
+            
             <div class="space-y-4">
+                <!-- Coin Info Row -->
                 <div class="grid grid-cols-2 gap-3">
-                    <div><label class="text-[10px] uppercase text-slate-400 font-bold">Coin</label><input type="text" id="auto-coin" class="w-full p-2 rounded text-sm font-bold text-white bg-slate-800" readonly></div>
-                    <div><label class="text-[10px] uppercase text-slate-400 font-bold">Side</label><select id="auto-side" class="w-full p-2 rounded text-sm font-bold"><option value="Buy">Long / Buy</option><option value="Sell">Short / Sell</option></select></div>
-                </div>
-                <div>
-                    <label class="text-[10px] uppercase text-slate-400 font-bold">Size (USDT)</label>
-                    <input type="number" id="auto-size" class="w-full p-2 rounded text-sm" placeholder="e.g. 15">
-                    <div class="flex gap-2 mt-1">
-                        <button onclick="calcSize(10)" class="bg-slate-800 text-[9px] px-2 py-1 rounded text-slate-300 hover:text-white">10%</button>
-                        <button onclick="calcSize(25)" class="bg-slate-800 text-[9px] px-2 py-1 rounded text-slate-300 hover:text-white">25%</button>
-                        <button onclick="calcSize(50)" class="bg-slate-800 text-[9px] px-2 py-1 rounded text-slate-300 hover:text-white">50%</button>
+                    <div>
+                        <label class="text-[10px] uppercase text-slate-400 font-bold mb-1 block">Asset</label>
+                        <input type="text" id="auto-coin" class="w-full p-2.5 rounded text-sm font-bold text-white bg-slate-800" readonly>
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase text-slate-400 font-bold mb-1 block">Direction</label>
+                        <select id="auto-side" class="w-full p-2.5 rounded text-sm font-bold">
+                            <option value="Buy">Long 🚀</option>
+                            <option value="Sell">Short 📉</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Webhook URL Display -->
-                <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20">
-                    <label class="text-[9px] uppercase text-blue-400 font-bold block mb-1">1. Webhook URL (Paste this in TradingView)</label>
+                <!-- Size Calculator -->
+                <div class="bg-slate-800/50 p-3 rounded-lg">
+                    <div class="flex justify-between items-end mb-2">
+                        <label class="text-[10px] uppercase text-slate-400 font-bold">Position Size (USDT)</label>
+                        <span class="text-[10px] text-slate-500">Based on Equity</span>
+                    </div>
                     <div class="flex gap-2">
-                        <input type="text" id="webhook-url-display" class="w-full p-1.5 text-[10px] bg-black/30 rounded text-slate-300 font-mono select-all" readonly>
-                        <button onclick="copyToClip('webhook-url-display')" class="bg-blue-600 px-2 rounded text-white hover:bg-blue-500"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                        <input type="number" id="auto-size" class="w-full p-2 rounded text-sm font-mono border-slate-600" placeholder="Size">
+                        <button onclick="calcSize(10)" class="px-2 bg-slate-700 rounded text-[10px] hover:bg-slate-600">10%</button>
+                        <button onclick="calcSize(25)" class="px-2 bg-slate-700 rounded text-[10px] hover:bg-slate-600">25%</button>
                     </div>
                 </div>
 
-                <!-- JSON Message Display -->
-                <div class="bg-black/50 p-3 rounded border border-slate-700 relative">
-                    <label class="text-[9px] text-green-500 absolute top-2 left-3 font-bold">2. Message (JSON)</label>
-                    <pre id="json-output" class="text-[10px] text-slate-300 font-mono whitespace-pre-wrap break-all pt-6 pb-2 select-all">...</pre>
-                    <button onclick="copyCode()" class="absolute top-2 right-2 text-slate-400 hover:text-white bg-slate-800 p-1 rounded"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                <!-- Output Area -->
+                <div class="bg-black/50 p-3 rounded border border-slate-700 relative group">
+                    <label class="text-[9px] text-green-500 absolute top-2 left-3 font-bold bg-black/80 px-1 rounded">JSON Payload</label>
+                    <pre id="json-output" class="text-[10px] text-slate-300 font-mono whitespace-pre-wrap break-all pt-6 pb-2 select-all hover:text-white transition-colors">...</pre>
+                    <button onclick="copyCode()" class="absolute top-2 right-2 text-slate-400 hover:text-white bg-slate-800 p-1.5 rounded transition-colors"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                     <button onclick="sendSignalToTelegram()" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/50 py-3 rounded-lg text-xs font-bold flex justify-center items-center gap-2 transition-all">
+                        <i data-lucide="send" class="w-4 h-4"></i> Alert Telegram
+                    </button>
+                    <button onclick="copyCode()" class="bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-lg text-xs font-bold flex justify-center items-center gap-2 transition-all shadow-lg shadow-purple-500/20">
+                        <i data-lucide="copy" class="w-4 h-4"></i> Copy for Webhook
+                    </button>
                 </div>
             </div>
         </div>
@@ -91,96 +139,445 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center gap-3">
-                    <div class="bg-gradient-to-r from-cyan-600 to-blue-600 w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/10"><i data-lucide="brain" class="w-5 h-5 text-white"></i></div>
-                    <div><h1 class="text-lg font-extrabold text-white leading-none tracking-tight">THE BRAIN <span class="text-purple-400 text-[10px] align-top">V16</span></h1><div class="flex items-center gap-1.5 mt-0.5"><div class="live-pulse"></div><span class="text-[9px] font-bold text-green-500 tracking-wider uppercase">NETLIFY CONNECTED</span></div></div>
+                    <div class="bg-gradient-to-r from-cyan-600 to-blue-600 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/10 transform rotate-3">
+                        <i data-lucide="brain-circuit" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-extrabold text-white leading-none tracking-tight">THE BRAIN <span class="text-cyan-400 text-[10px] align-top bg-cyan-900/30 px-1 rounded">V17</span></h1>
+                        <div class="flex items-center gap-1.5 mt-1">
+                            <div class="live-pulse"></div>
+                            <span class="text-[9px] font-bold text-slate-400 tracking-wider uppercase">System Active</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3"><button onclick="toggleModal('settings-modal', true)" class="bg-slate-900 border border-slate-700 hover:border-cyan-500 text-slate-300 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all"><i data-lucide="key" class="w-3 h-3"></i></button></div>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleModal('settings-modal', true)" class="bg-slate-900 border border-slate-700 hover:border-cyan-500 text-slate-300 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all group">
+                        <span class="hidden sm:inline group-hover:text-white">API Config</span>
+                        <i data-lucide="settings" class="w-4 h-4 group-hover:rotate-90 transition-transform"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
     <!-- MAIN DASHBOARD -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pb-12">
-        <div class="glass-panel p-6 rounded-2xl mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="text-center md:text-left"><span class="text-xs text-slate-400 uppercase font-bold tracking-widest">Total Net Worth</span><h2 class="text-4xl font-extrabold text-white mt-1 tracking-tight" id="total-equity">$0.00</h2></div>
-            <div class="flex gap-2 w-full md:w-auto">
-                <div class="relative w-full md:w-64"><input type="text" id="new-coin-input" placeholder="Search (e.g. BTC)" class="w-full bg-slate-900 border border-slate-700 text-white pl-4 pr-10 py-3 rounded-xl text-sm font-bold uppercase focus:border-cyan-500"><i data-lucide="search" class="absolute right-3 top-3 w-4 h-4 text-slate-500"></i></div>
-                <button onclick="addCoin()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-3 rounded-xl font-bold transition-all shadow-lg shadow-cyan-500/20"><i data-lucide="plus" class="w-5 h-5"></i></button>
+        
+        <!-- Equity Card -->
+        <div class="glass-panel p-6 rounded-2xl mb-8 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="text-center md:text-left z-10">
+                <span class="text-xs text-slate-400 uppercase font-bold tracking-widest flex items-center gap-2 md:justify-start justify-center">
+                    <i data-lucide="wallet" class="w-3 h-3"></i> Total Net Worth
+                </span>
+                <h2 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 mt-2 tracking-tight" id="total-equity">$0.00</h2>
+            </div>
+            
+            <div class="flex gap-2 w-full md:w-auto z-10">
+                <div class="relative w-full md:w-64 group">
+                    <input type="text" id="new-coin-input" placeholder="ADD COIN (e.g. BTC)" 
+                        class="w-full bg-slate-900/80 border border-slate-700 text-white pl-4 pr-10 py-3 rounded-xl text-sm font-bold uppercase focus:border-cyan-500 focus:bg-slate-900 transition-all">
+                    <i data-lucide="search" class="absolute right-3 top-3 w-4 h-4 text-slate-500 group-focus-within:text-cyan-500 transition-colors"></i>
+                </div>
+                <button onclick="addCoin()" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-5 py-3 rounded-xl font-bold transition-all shadow-lg shadow-cyan-500/20 active:scale-95">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                </button>
             </div>
         </div>
+
+        <!-- Grid -->
         <div id="coin-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        <div id="empty-state" class="hidden text-center py-20"><div class="bg-slate-900/50 inline-block p-6 rounded-full mb-4"><i data-lucide="layers" class="w-12 h-12 text-slate-600"></i></div><h3 class="text-slate-400 font-bold text-lg">Dashboard Empty</h3><p class="text-slate-600 text-sm mt-1">Add a coin to start.</p></div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-20 animate-fade-in">
+            <div class="bg-slate-900/50 inline-block p-8 rounded-full mb-6 border border-slate-800">
+                <i data-lucide="layout-grid" class="w-12 h-12 text-slate-600"></i>
+            </div>
+            <h3 class="text-slate-300 font-bold text-xl">Dashboard Empty</h3>
+            <p class="text-slate-500 text-sm mt-2">Add a ticker symbol above to start tracking.</p>
+        </div>
     </main>
 
     <script>
+        // --- INITIALIZATION ---
         lucide.createIcons();
-        let portfolio = JSON.parse(localStorage.getItem('my_portfolio_v14')) || [];
-        let apiKeys = { tgToken: localStorage.getItem('tg_bot_token') || '', tgChat: localStorage.getItem('tg_chat_id') || '', bybitKey: localStorage.getItem('bybit_key') || '', bybitSecret: localStorage.getItem('bybit_secret') || '' };
+        
+        // UPGRADE: Changed DB key to v17 for version consistency
+        let portfolio = JSON.parse(localStorage.getItem('my_portfolio_v17')) || [];
+        
+        let apiKeys = {
+            tgToken: localStorage.getItem('tg_bot_token') || '',
+            tgChat: localStorage.getItem('tg_chat_id') || '',
+            bybitKey: localStorage.getItem('bybit_key') || '',
+            bybitSecret: localStorage.getItem('bybit_secret') || ''
+        };
 
-        window.onload = function() { renderPortfolio(); startPriceUpdates(); loadSettings(); };
+        window.onload = function() {
+            renderPortfolio();
+            startPriceUpdates();
+            loadSettings();
+        };
 
-        function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-        function loadSettings() { document.getElementById('tg-token').value = apiKeys.tgToken; document.getElementById('tg-chat-id').value = apiKeys.tgChat; document.getElementById('bybit-key').value = apiKeys.bybitKey; document.getElementById('bybit-secret').value = apiKeys.bybitSecret; }
+        // --- MODAL LOGIC ---
+        function toggleModal(id, show) {
+            const el = document.getElementById(id);
+            if(show) {
+                el.style.display = 'flex';
+                // Trigger reflow for animation if needed
+            } else {
+                el.style.display = 'none';
+            }
+        }
+
+        function loadSettings() {
+            document.getElementById('tg-token').value = apiKeys.tgToken;
+            document.getElementById('tg-chat-id').value = apiKeys.tgChat;
+            document.getElementById('bybit-key').value = apiKeys.bybitKey;
+            document.getElementById('bybit-secret').value = apiKeys.bybitSecret;
+        }
+
         function saveKeys() {
-            const tToken = document.getElementById('tg-token').value.trim(); const tChat = document.getElementById('tg-chat-id').value.trim(); const bKey = document.getElementById('bybit-key').value.trim(); const bSecret = document.getElementById('bybit-secret').value.trim();
-            localStorage.setItem('tg_bot_token', tToken); localStorage.setItem('tg_chat_id', tChat); localStorage.setItem('bybit_key', bKey); localStorage.setItem('bybit_secret', bSecret);
+            const tToken = document.getElementById('tg-token').value.trim();
+            const tChat = document.getElementById('tg-chat-id').value.trim();
+            const bKey = document.getElementById('bybit-key').value.trim();
+            const bSecret = document.getElementById('bybit-secret').value.trim();
+            
+            localStorage.setItem('tg_bot_token', tToken);
+            localStorage.setItem('tg_chat_id', tChat);
+            localStorage.setItem('bybit_key', bKey);
+            localStorage.setItem('bybit_secret', bSecret);
+            
             apiKeys = { tgToken: tToken, tgChat: tChat, bybitKey: bKey, bybitSecret: bSecret };
-            toggleModal('settings-modal', false); alert("✅ Keys Saved!");
+            toggleModal('settings-modal', false);
+            alert("✅ Credentials Saved Securely");
         }
 
+        // --- TELEGRAM CONNECTION FIX ---
+        async function testTelegram() {
+            const token = document.getElementById('tg-token').value.trim();
+            const chat = document.getElementById('tg-chat-id').value.trim();
+            const statusEl = document.getElementById('tg-status');
+            
+            if(!token || !chat) { alert("Please enter Token and Chat ID first."); return; }
+            
+            statusEl.innerText = "Testing...";
+            statusEl.className = "text-[10px] bg-yellow-900/30 text-yellow-500 px-2 py-0.5 rounded animate-pulse";
+
+            const url = `https://api.telegram.org/bot${token}/sendMessage`;
+            const params = {
+                chat_id: chat,
+                text: "🧠 The Brain V17: Connection Successful!\nAll systems online."
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await response.json();
+                
+                if(data.ok) {
+                    statusEl.innerText = "Connected ✅";
+                    statusEl.className = "text-[10px] bg-green-900/30 text-green-500 px-2 py-0.5 rounded";
+                    alert("Message sent to Telegram! Check your app.");
+                } else {
+                    throw new Error(data.description);
+                }
+            } catch (e) {
+                statusEl.innerText = "Failed ❌";
+                statusEl.className = "text-[10px] bg-red-900/30 text-red-500 px-2 py-0.5 rounded";
+                alert("Connection Failed: " + e.message);
+            }
+        }
+
+        async function sendSignalToTelegram() {
+            const token = apiKeys.tgToken;
+            const chat = apiKeys.tgChat;
+            const jsonBody = document.getElementById('json-output').innerText;
+            
+            if(!token || !chat) { alert("Configure Telegram settings first!"); return; }
+
+            const url = `https://api.telegram.org/bot${token}/sendMessage`;
+            const text = `🚨 *SIGNAL ALERT* 🚨\n\n\`\`\`json\n${jsonBody}\n\`\`\`\n\n_Generated by The Brain V17_`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chat, text: text, parse_mode: 'Markdown' })
+                });
+                if(response.ok) alert("Signal forwarded to Telegram! 🚀");
+                else alert("Failed to send to Telegram.");
+            } catch(e) {
+                console.error(e);
+                alert("Network error sending to Telegram.");
+            }
+        }
+
+        // --- PORTFOLIO LOGIC ---
         function addCoin() {
-            const input = document.getElementById('new-coin-input'); const symbol = input.value.toUpperCase().trim(); if (!symbol) return;
-            if (!portfolio.find(c => c.symbol === symbol)) { portfolio.push({ symbol: symbol, holdings: 0, avgPrice: 0 }); savePortfolio(); renderPortfolio(); updatePrices(); } input.value = '';
+            const input = document.getElementById('new-coin-input');
+            const symbol = input.value.toUpperCase().trim();
+            if (!symbol) return;
+            
+            // Check duplicates
+            if (!portfolio.find(c => c.symbol === symbol)) {
+                portfolio.push({ symbol: symbol, holdings: 0, avgPrice: 0 });
+                savePortfolio();
+                renderPortfolio();
+                updatePrices();
+            } else {
+                alert(symbol + " is already in your dashboard.");
+            }
+            input.value = '';
         }
-        function removeCoin(symbol) { if(confirm('Delete ' + symbol + '?')) { portfolio = portfolio.filter(c => c.symbol !== symbol); savePortfolio(); renderPortfolio(); } }
-        function savePortfolio() { localStorage.setItem('my_portfolio_v14', JSON.stringify(portfolio)); }
 
-        // --- FIXED AUTOMATION GENERATOR ---
+        function removeCoin(symbol) {
+            if(confirm('Are you sure you want to remove ' + symbol + '?')) {
+                portfolio = portfolio.filter(c => c.symbol !== symbol);
+                savePortfolio();
+                renderPortfolio();
+            }
+        }
+
+        function savePortfolio() {
+            localStorage.setItem('my_portfolio_v17', JSON.stringify(portfolio));
+        }
+
+        // --- SIGNAL GENERATOR LOGIC ---
         function openAutoModal(symbol) {
             document.getElementById('auto-coin').value = symbol;
-            
-            // 🔥 HARDCODED NETLIFY URL (Always Correct)
-            const webhookUrl = "https://the-brain-pro.netlify.app/.netlify/functions/trade";
-            
-            document.getElementById('webhook-url-display').value = webhookUrl;
             updateJsonPreview();
             toggleModal('auto-modal', true);
         }
 
-        function copyToClip(id) { document.getElementById(id).select(); document.execCommand('copy'); alert("Copied!"); }
-        function calcSize(percent) { const equity = parseFloat(document.getElementById('total-equity').innerText.replace('$','').replace(',','')) || 1000; const amount = (equity * (percent / 100)).toFixed(2); document.getElementById('auto-size').value = amount; updateJsonPreview(); }
+        function calcSize(percent) {
+            const equityText = document.getElementById('total-equity').innerText;
+            const equity = parseFloat(equityText.replace('$','').replace(',','')) || 0;
+            if(equity === 0) {
+                document.getElementById('auto-size').value = 100; // Default fallback
+            } else {
+                const amount = (equity * (percent / 100)).toFixed(2);
+                document.getElementById('auto-size').value = amount;
+            }
+            updateJsonPreview();
+        }
         
         function updateJsonPreview() {
             const symbol = document.getElementById('auto-coin').value;
             const side = document.getElementById('auto-side').value;
             const qty = document.getElementById('auto-size').value || "10";
-            const json = { "symbol": symbol + "USDT", "side": side, "qty": qty, "api_key": apiKeys.bybitKey || "YOUR_KEY_HERE", "secret": apiKeys.bybitSecret || "YOUR_SECRET_HERE" };
+            
+            // Generate clean JSON payload
+            const json = {
+                "symbol": symbol + "USDT",
+                "side": side,
+                "qty": qty,
+                "api_key": apiKeys.bybitKey ? "***KEY_HIDDEN***" : "YOUR_KEY",
+                "secret": apiKeys.bybitSecret ? "***SECRET_HIDDEN***" : "YOUR_SECRET",
+                "timestamp": Date.now()
+            };
+            
             document.getElementById('json-output').innerText = JSON.stringify(json, null, 2);
-            document.getElementById('auto-side').onchange = updateJsonPreview; document.getElementById('auto-size').oninput = updateJsonPreview;
+            
+            // Attach listeners dynamically to inputs
+            document.getElementById('auto-side').onchange = updateJsonPreview;
+            document.getElementById('auto-size').oninput = updateJsonPreview;
         }
-        function copyCode() { navigator.clipboard.writeText(document.getElementById('json-output').innerText); alert("✅ JSON Copied!"); }
 
+        function copyCode() {
+            const text = document.getElementById('json-output').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("✅ Payload Copied to Clipboard");
+            });
+        }
+
+        // --- UI RENDERING ---
         function renderPortfolio() {
-            const grid = document.getElementById('coin-grid'); const emptyState = document.getElementById('empty-state'); grid.innerHTML = '';
-            if (portfolio.length === 0) { emptyState.classList.remove('hidden'); return; } emptyState.classList.add('hidden');
+            const grid = document.getElementById('coin-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            if (portfolio.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
             portfolio.forEach(coin => {
-                const card = document.createElement('article'); card.className = 'glass-panel rounded-2xl p-6 flex flex-col relative group border-t border-slate-800 hover:border-slate-600'; card.setAttribute('data-symbol', coin.symbol);
+                const card = document.createElement('article');
+                card.className = 'glass-panel rounded-2xl p-6 flex flex-col relative group border-t border-slate-800';
+                
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-6"><div><h3 class="text-3xl font-extrabold text-white tracking-tight">${coin.symbol}</h3><div class="flex items-center gap-2 mt-1"><span class="text-lg font-mono text-slate-400 live-price" id="price-${coin.symbol}">...</span><span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 font-bold">USDT</span></div></div><div class="flex gap-2"><button onclick="toggleChart('${coin.symbol}')" class="p-2 bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button><button onclick="removeCoin('${coin.symbol}')" class="p-2 bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors opacity-50 group-hover:opacity-100"><i data-lucide="trash" class="w-5 h-5"></i></button></div></div>
-                    <div id="chart-${coin.symbol}" class="h-0 overflow-hidden transition-all duration-300 rounded-xl mb-4 border-slate-800"></div>
-                    <button onclick="openAutoModal('${coin.symbol}')" class="w-full mb-4 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-600/30 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 transition-all"><i data-lucide="bot" class="w-4 h-4"></i> Signal Generator</button>
-                    <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 mt-auto"><div class="flex justify-between text-[10px] text-slate-500 uppercase font-bold mb-3"><span>My Position</span><span id="pnl-${coin.symbol}">PNL: $0.00</span></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[9px] text-slate-600 block mb-1">Qty</label><input type="number" value="${coin.holdings}" onchange="updateHolding('${coin.symbol}', 'holdings', this.value)" placeholder="0" class="w-full p-2 text-sm rounded-lg text-center font-mono focus:border-cyan-500 bg-slate-950"></div><div><label class="text-[9px] text-slate-600 block mb-1">Entry ($)</label><input type="number" value="${coin.avgPrice}" onchange="updateHolding('${coin.symbol}', 'avgPrice', this.value)" placeholder="0.00" class="w-full p-2 text-sm rounded-lg text-center font-mono focus:border-cyan-500 bg-slate-950"></div></div></div>
-                `; grid.appendChild(card);
-            }); lucide.createIcons();
+                    <!-- Top Row: Info & Actions -->
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                                ${coin.symbol}
+                                <span class="bg-slate-800 text-[10px] px-1.5 py-0.5 rounded text-slate-500 font-bold border border-slate-700">USDT</span>
+                            </h3>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-lg font-mono text-cyan-400 live-price" id="price-${coin.symbol}">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="toggleChart('${coin.symbol}')" title="Toggle Chart" class="p-2 bg-slate-800 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors border border-slate-700">
+                                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="removeCoin('${coin.symbol}')" title="Delete" class="p-2 bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-700 transition-colors border border-slate-700">
+                                <i data-lucide="trash" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div id="chart-${coin.symbol}" class="chart-wrapper"></div>
+
+                    <!-- Signal Button -->
+                    <button onclick="openAutoModal('${coin.symbol}')" class="w-full mb-4 bg-gradient-to-r from-purple-900/40 to-indigo-900/40 hover:from-purple-900/60 hover:to-indigo-900/60 text-purple-300 border border-purple-500/30 py-3 rounded-lg text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 transition-all shadow-lg shadow-purple-900/10">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Generate Signal
+                    </button>
+
+                    <!-- Position Data -->
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 mt-auto shadow-inner">
+                        <div class="flex justify-between text-[10px] text-slate-500 uppercase font-bold mb-3 border-b border-slate-800 pb-2">
+                            <span>Holdings</span>
+                            <span id="pnl-${coin.symbol}">PNL: --</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[9px] text-slate-600 block mb-1 font-bold">COIN QTY</label>
+                                <input type="number" value="${coin.holdings}" onchange="updateHolding('${coin.symbol}', 'holdings', this.value)" 
+                                    class="w-full p-2 text-sm rounded-lg text-center font-mono focus:border-cyan-500 bg-slate-950 text-slate-300 border-slate-800">
+                            </div>
+                            <div>
+                                <label class="text-[9px] text-slate-600 block mb-1 font-bold">AVG ENTRY ($)</label>
+                                <input type="number" value="${coin.avgPrice}" onchange="updateHolding('${coin.symbol}', 'avgPrice', this.value)" 
+                                    class="w-full p-2 text-sm rounded-lg text-center font-mono focus:border-cyan-500 bg-slate-950 text-slate-300 border-slate-800">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
         }
 
-        function updateHolding(symbol, field, value) { const coin = portfolio.find(c => c.symbol === symbol); if (coin) { coin[field] = parseFloat(value) || 0; savePortfolio(); updatePrices(); } }
-        async function startPriceUpdates() { updatePrices(); setInterval(updatePrices, 30000); }
-        async function updatePrices() {
-            if (portfolio.length === 0) return; const idMap = { 'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'RNDR': 'render-token', 'FLUX': 'zelcash', 'DUSK': 'dusk-network', 'XRP': 'ripple', 'BNB': 'binancecoin' }; const ids = portfolio.map(c => idMap[c.symbol] || c.symbol.toLowerCase()).join(',');
-            try { const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`); const data = await res.json(); let total = 0; portfolio.forEach(coin => { const id = idMap[coin.symbol] || coin.symbol.toLowerCase(); const price = data[id]?.usd; if (price) { document.getElementById(`price-${coin.symbol}`).innerText = `$${price}`; if (coin.holdings > 0) { total += coin.holdings * price; if(coin.avgPrice > 0) { const value = coin.holdings * price; const cost = coin.holdings * coin.avgPrice; const pnl = value - cost; const pnlEl = document.getElementById(`pnl-${coin.symbol}`); if(pnlEl) { pnlEl.innerText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`; pnlEl.className = `text-xs font-bold ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`; } } } } }); document.getElementById('total-equity').innerText = `$${total.toFixed(2)}`; } catch(e) {}
+        function updateHolding(symbol, field, value) {
+            const coin = portfolio.find(c => c.symbol === symbol);
+            if (coin) {
+                coin[field] = parseFloat(value) || 0;
+                savePortfolio();
+                updatePrices(); // Re-calc PNL immediately
+            }
         }
-        function toggleChart(symbol) { const container = document.getElementById(`chart-${symbol}`); if (container.style.height === '350px') { container.style.height = '0'; container.innerHTML = ''; } else { container.style.height = '350px'; container.style.borderWidth = '1px'; new TradingView.widget({ "autosize": true, "symbol": "BINANCE:" + symbol + "USDT", "interval": "D", "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "en", "toolbar_bg": "#f1f3f6", "enable_publishing": false, "hide_top_toolbar": true, "container_id": `chart-${symbol}` }); } }
+
+        // --- MARKET DATA & LOGIC ---
+        async function startPriceUpdates() {
+            updatePrices();
+            setInterval(updatePrices, 30000); // 30s poll
+        }
+
+        async function updatePrices() {
+            if (portfolio.length === 0) {
+                document.getElementById('total-equity').innerText = "$0.00";
+                return;
+            }
+
+            // Expanded Map for common coins
+            const idMap = {
+                'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'BNB': 'binancecoin',
+                'XRP': 'ripple', 'ADA': 'cardano', 'DOGE': 'dogecoin', 'AVAX': 'avalanche-2',
+                'DOT': 'polkadot', 'MATIC': 'matic-network', 'TRX': 'tron', 'LTC': 'litecoin',
+                'SHIB': 'shiba-inu', 'UNI': 'uniswap', 'LINK': 'chainlink', 'ATOM': 'cosmos',
+                'XLM': 'stellar', 'XMR': 'monero', 'ALGO': 'algorand', 'BCH': 'bitcoin-cash',
+                'RNDR': 'render-token', 'FLUX': 'zelcash', 'DUSK': 'dusk-network'
+            };
+
+            const ids = portfolio.map(c => idMap[c.symbol] || c.symbol.toLowerCase()).join(',');
+            
+            try {
+                const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+                if(!res.ok) throw new Error("Rate Limit");
+                const data = await res.json();
+                
+                let total = 0;
+
+                portfolio.forEach(coin => {
+                    const id = idMap[coin.symbol] || coin.symbol.toLowerCase();
+                    const price = data[id]?.usd;
+                    
+                    if (price) {
+                        // Update Price UI
+                        const priceEl = document.getElementById(`price-${coin.symbol}`);
+                        if(priceEl) {
+                            priceEl.innerText = `$${price.toLocaleString()}`;
+                            // Flash effect
+                            priceEl.classList.add('text-white');
+                            setTimeout(() => priceEl.classList.remove('text-white'), 300);
+                        }
+
+                        // Calculate Total Equity & PNL
+                        if (coin.holdings > 0) {
+                            const currentVal = coin.holdings * price;
+                            total += currentVal;
+
+                            if(coin.avgPrice > 0) {
+                                const cost = coin.holdings * coin.avgPrice;
+                                const pnl = currentVal - cost;
+                                const pnlPercent = (pnl / cost) * 100;
+                                
+                                const pnlEl = document.getElementById(`pnl-${coin.symbol}`);
+                                if(pnlEl) {
+                                    pnlEl.innerText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPercent.toFixed(1)}%)`;
+                                    pnlEl.className = `text-[10px] uppercase font-bold ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                document.getElementById('total-equity').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            } catch(e) {
+                console.log("Pricing update paused (likely rate limit).");
+            }
+        }
+
+        // --- CHARTING ---
+        function toggleChart(symbol) {
+            const container = document.getElementById(`chart-${symbol}`);
+            const isActive = container.classList.contains('active');
+            
+            // Close all others
+            document.querySelectorAll('.chart-wrapper').forEach(el => {
+                el.classList.remove('active');
+                el.innerHTML = '';
+            });
+
+            if (!isActive) {
+                container.classList.add('active');
+                
+                // Slight delay to allow transition to start before rendering TV
+                setTimeout(() => {
+                    new TradingView.widget({
+                        "autosize": true,
+                        "symbol": "BINANCE:" + symbol + "USDT",
+                        "interval": "D",
+                        "timezone": "Etc/UTC",
+                        "theme": "dark",
+                        "style": "1",
+                        "locale": "en",
+                        "toolbar_bg": "#f1f3f6",
+                        "enable_publishing": false,
+                        "hide_top_toolbar": false,
+                        "hide_side_toolbar": false, // Enabled side toolbar for V17
+                        "container_id": `chart-${symbol}`
+                    });
+                }, 100);
+            }
+        }
     </script>
 </body>
 </html>
