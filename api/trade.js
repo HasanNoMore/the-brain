@@ -1,42 +1,35 @@
 import crypto from 'crypto';
 
 export default async function handler(req, res) {
-    // 1. Security: Only allow POST requests
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
         const signal = req.body;
-        console.log(`🔫 SIGNAL: ${signal.side} ${signal.symbol}`);
+        console.log(`🔫 SIGNAL SENT: ${signal.side} ${signal.symbol} (Qty: ${signal.qty})`);
 
-        // 2. Grab Keys
         const apiKey = signal.api_key;
         const apiSecret = signal.secret;
         
-        if(!apiKey || !apiSecret) {
-            return res.status(400).json({ error: 'Missing Keys' });
-        }
+        if(!apiKey || !apiSecret) return res.status(400).json({ error: 'Missing Keys' });
 
-        // 3. Prepare Bybit Order
         const timestamp = Date.now().toString();
         const recvWindow = '5000';
+        
+        // Construct Order
         const orderData = {
             category: 'linear',
             symbol: signal.symbol,
             side: signal.side,
             orderType: 'Market',
             qty: signal.qty,
-            timeInForce: 'GTC'
+            timeInForce: 'GTC',
+            // positionIdx: 0, // 0 = One-Way Mode (Default). 
         };
         
         const jsonBody = JSON.stringify(orderData);
-        
-        // 4. Sign (HMAC SHA256)
         const signature_payload = timestamp + apiKey + recvWindow + jsonBody;
         const signature = crypto.createHmac('sha256', apiSecret).update(signature_payload).digest('hex');
 
-        // 5. Send to Bybit
         const response = await fetch('https://api.bybit.com/v5/order/create', {
             method: 'POST',
             headers: {
@@ -51,10 +44,14 @@ export default async function handler(req, res) {
 
         const result = await response.json();
         
+        // --- DEBUG LOGGING ---
+        console.log("🔴 BYBIT RESPONSE:", JSON.stringify(result)); 
+
         if(result.retCode === 0) {
             return res.status(200).json({ message: "✅ SUCCESS", data: result });
         } else {
-            return res.status(400).json({ message: "❌ FAILED", error: result });
+            // This will show the exact error in the Vercel response
+            return res.status(400).json({ message: "❌ BYBIT REJECTED", error: result.retMsg, full: result });
         }
 
     } catch (error) {
