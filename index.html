@@ -33,7 +33,6 @@
 </head>
 <body class="pb-32 selection:bg-cyan-500/30">
 
-    <!-- SETTINGS MODAL -->
     <div id="settings-modal">
         <div class="modal-content border-t-4 border-t-cyan-500">
             <div class="flex justify-between items-center mb-6">
@@ -45,7 +44,6 @@
             </div>
             
             <div class="space-y-5">
-                <!-- Telegram Section -->
                 <div class="bg-blue-900/10 p-4 rounded-xl border border-blue-500/20">
                     <div class="flex items-center justify-between mb-3">
                         <label class="text-xs uppercase text-blue-400 font-bold flex items-center gap-2"><i data-lucide="send" class="w-3 h-3"></i> Telegram Bot</label>
@@ -58,7 +56,6 @@
                     </div>
                 </div>
 
-                <!-- Bybit Section -->
                 <div class="pt-2 border-t border-slate-700/50">
                     <label class="text-[10px] uppercase text-slate-400 font-bold block mb-2">Bybit API (For JSON Gen)</label>
                     <div class="space-y-3">
@@ -74,7 +71,6 @@
         </div>
     </div>
 
-    <!-- AUTO-TRADE MODAL -->
     <div id="auto-modal">
         <div class="modal-content border-t-4 border-t-purple-500">
             <div class="flex justify-between items-center mb-4">
@@ -86,7 +82,6 @@
             </div>
             
             <div class="space-y-4">
-                <!-- Coin Info Row -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="text-[10px] uppercase text-slate-400 font-bold mb-1 block">Asset</label>
@@ -101,7 +96,6 @@
                     </div>
                 </div>
 
-                <!-- Size Calculator -->
                 <div class="bg-slate-800/50 p-3 rounded-lg">
                     <div class="flex justify-between items-end mb-2">
                         <label class="text-[10px] uppercase text-slate-400 font-bold">Position Size (USDT)</label>
@@ -114,14 +108,12 @@
                     </div>
                 </div>
 
-                <!-- Output Area -->
                 <div class="bg-black/50 p-3 rounded border border-slate-700 relative group">
                     <label class="text-[9px] text-green-500 absolute top-2 left-3 font-bold bg-black/80 px-1 rounded">JSON Payload</label>
                     <pre id="json-output" class="text-[10px] text-slate-300 font-mono whitespace-pre-wrap break-all pt-6 pb-2 select-all hover:text-white transition-colors">...</pre>
                     <button onclick="copyCode()" class="absolute top-2 right-2 text-slate-400 hover:text-white bg-slate-800 p-1.5 rounded transition-colors"><i data-lucide="copy" class="w-3 h-3"></i></button>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="grid grid-cols-2 gap-3 pt-2">
                      <button onclick="sendSignalToTelegram()" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/50 py-3 rounded-lg text-xs font-bold flex justify-center items-center gap-2 transition-all">
                         <i data-lucide="send" class="w-4 h-4"></i> Alert Telegram
@@ -134,7 +126,6 @@
         </div>
     </div>
 
-    <!-- HEADER -->
     <header class="sticky top-0 z-40 bg-[#050b14]/90 backdrop-blur-md border-b border-slate-800 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
@@ -160,10 +151,8 @@
         </div>
     </header>
 
-    <!-- MAIN DASHBOARD -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pb-12">
         
-        <!-- Equity Card -->
         <div class="glass-panel p-6 rounded-2xl mb-8 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
             <div class="absolute -right-10 -top-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
             
@@ -186,10 +175,8 @@
             </div>
         </div>
 
-        <!-- Grid -->
         <div id="coin-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
-        <!-- Empty State -->
         <div id="empty-state" class="hidden text-center py-20 animate-fade-in">
             <div class="bg-slate-900/50 inline-block p-8 rounded-full mb-6 border border-slate-800">
                 <i data-lucide="layout-grid" class="w-12 h-12 text-slate-600"></i>
@@ -411,7 +398,6 @@
                 card.className = 'glass-panel rounded-2xl p-6 flex flex-col relative group border-t border-slate-800';
                 
                 card.innerHTML = `
-                    <!-- Top Row: Info & Actions -->
                     <div class="flex justify-between items-start mb-6">
                         <div>
                             <h3 class="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
@@ -432,15 +418,12 @@
                         </div>
                     </div>
 
-                    <!-- Chart Container -->
                     <div id="chart-${coin.symbol}" class="chart-wrapper"></div>
 
-                    <!-- Signal Button -->
                     <button onclick="openAutoModal('${coin.symbol}')" class="w-full mb-4 bg-gradient-to-r from-purple-900/40 to-indigo-900/40 hover:from-purple-900/60 hover:to-indigo-900/60 text-purple-300 border border-purple-500/30 py-3 rounded-lg text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 transition-all shadow-lg shadow-purple-900/10">
                         <i data-lucide="zap" class="w-4 h-4"></i> Generate Signal
                     </button>
 
-                    <!-- Position Data -->
                     <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 mt-auto shadow-inner">
                         <div class="flex justify-between text-[10px] text-slate-500 uppercase font-bold mb-3 border-b border-slate-800 pb-2">
                             <span>Holdings</span>
@@ -513,10 +496,25 @@
                         // Update Price UI
                         const priceEl = document.getElementById(`price-${coin.symbol}`);
                         if(priceEl) {
+                            // --- FLASH FIX APPLIED HERE ---
+                            // 1. Get Old Price
+                            const oldPrice = parseFloat(priceEl.dataset.lastPrice) || 0;
+                            priceEl.dataset.lastPrice = price; // Store for next time
+
+                            // 2. Reset Class
+                            priceEl.className = "text-lg font-mono text-cyan-400 live-price transition-colors duration-500";
+                            
+                            // 3. Compare & Flash
+                            if (price > oldPrice) {
+                                priceEl.classList.add('text-green-400', 'font-bold');
+                                setTimeout(() => priceEl.classList.remove('text-green-400', 'font-bold'), 500);
+                            } else if (price < oldPrice) {
+                                priceEl.classList.add('text-red-400', 'font-bold');
+                                setTimeout(() => priceEl.classList.remove('text-red-400', 'font-bold'), 500);
+                            }
+
+                            // 4. Update Text
                             priceEl.innerText = `$${price.toLocaleString()}`;
-                            // Flash effect
-                            priceEl.classList.add('text-white');
-                            setTimeout(() => priceEl.classList.remove('text-white'), 300);
                         }
 
                         // Calculate Total Equity & PNL
