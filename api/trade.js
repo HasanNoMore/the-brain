@@ -5,12 +5,13 @@ export default async function handler(req, res) {
 
     try {
         let signal;
-try {
-    signal = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-} catch(e) {
-    console.log("Failed to parse signal:", req.body);
-    return res.status(400).json({ error: 'Invalid JSON', received: req.body });
-}
+        try {
+            signal = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        } catch(e) {
+            console.log("Failed to parse signal:", req.body);
+            return res.status(400).json({ error: 'Invalid JSON', received: req.body });
+        }
+
         console.log(`🔫 SIGNAL SENT: ${signal.side} ${signal.symbol} (Qty: ${signal.qty})`);
 
         const apiKey = signal.api_key;
@@ -21,7 +22,6 @@ try {
         const timestamp = Date.now().toString();
         const recvWindow = '5000';
         
-        // Construct Order
         const orderData = {
             category: 'linear',
             symbol: signal.symbol,
@@ -29,7 +29,6 @@ try {
             orderType: 'Market',
             qty: signal.qty,
             timeInForce: 'GTC',
-            // positionIdx: 0, // 0 = One-Way Mode (Default). 
         };
         
         const jsonBody = JSON.stringify(orderData);
@@ -49,14 +48,11 @@ try {
         });
 
         const result = await response.json();
-        
-        // --- DEBUG LOGGING ---
         console.log("🔴 BYBIT RESPONSE:", JSON.stringify(result)); 
 
         if(result.retCode === 0) {
             return res.status(200).json({ message: "✅ SUCCESS", data: result });
         } else {
-            // This will show the exact error in the Vercel response
             return res.status(400).json({ message: "❌ BYBIT REJECTED", error: result.retMsg, full: result });
         }
 
