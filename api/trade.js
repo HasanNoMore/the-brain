@@ -4,7 +4,13 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
-        const signal = req.body;
+        let signal;
+try {
+    signal = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+} catch(e) {
+    console.log("Failed to parse signal:", req.body);
+    return res.status(400).json({ error: 'Invalid JSON', received: req.body });
+}
         console.log(`🔫 SIGNAL SENT: ${signal.side} ${signal.symbol} (Qty: ${signal.qty})`);
 
         const apiKey = signal.api_key;
