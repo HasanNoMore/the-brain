@@ -18,6 +18,7 @@ export default async function handler(req, res) {
         const apiSecret = process.env.BYBIT_API_SECRET;
         const useTestnet = (process.env.BYBIT_TESTNET || '').toLowerCase() === 'true';
         const minOrderQtyDefault = Number(process.env.MIN_ORDER_QTY || '0.001');
+        const minOrderValueDefault = Number(process.env.MIN_ORDER_VALUE || '15');
         let minOrderQtyBySymbol = {};
         try {
             minOrderQtyBySymbol = process.env.MIN_ORDER_QTY_BY_SYMBOL
@@ -56,6 +57,32 @@ export default async function handler(req, res) {
             });
         }
 
+        const baseUrl = useTestnet ? 'https://api-testnet.bybit.com' : 'https://api.bybit.com';
+        const minOrderValue = minOrderValueDefault;
+        if (minOrderValue > 0) {
+            try {
+                const tickerResponse = await fetch(
+                    `${baseUrl}/v5/market/tickers?category=spot&symbol=${symbol}`
+                );
+                const ticker = await tickerResponse.json();
+                const lastPrice = Number(ticker?.result?.list?.[0]?.lastPrice || 0);
+                if (lastPrice > 0) {
+                    const notional = qty * lastPrice;
+                    if (notional < minOrderValue) {
+                        return res.status(400).json({
+                            error: 'Order value below minimum',
+                            minOrderValue,
+                            lastPrice,
+                            notional,
+                            receivedQty: qty,
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('Failed to fetch ticker for min notional check:', e.message);
+            }
+        }
+
         const orderData = {
             category: 'spot',
             symbol,
@@ -69,7 +96,6 @@ export default async function handler(req, res) {
         const signaturePayload = timestamp + apiKey + recvWindow + jsonBody;
         const signature = crypto.createHmac('sha256', apiSecret).update(signaturePayload).digest('hex');
 
-        const baseUrl = useTestnet ? 'https://api-testnet.bybit.com' : 'https://api.bybit.com';
         const response = await fetch(`${baseUrl}/v5/order/create`, {
             method: 'POST',
             headers: {
