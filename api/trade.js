@@ -32,6 +32,17 @@ export default async function handler(req, res) {
         const timestamp = Date.now().toString();
         const recvWindow = '5000';
 
+        const rawSide = String(signal.side || '').toLowerCase();
+        const side = rawSide === 'buy' ? 'Buy' : rawSide === 'sell' ? 'Sell' : null;
+        if (!side) {
+            return res.status(400).json({ error: 'Invalid side', received: signal.side });
+        }
+
+        const symbol = String(signal.symbol || '').toUpperCase();
+        if (!symbol) {
+            return res.status(400).json({ error: 'Invalid symbol', received: signal.symbol });
+        }
+
         const qty = Number(signal.qty);
         if (!Number.isFinite(qty) || qty <= 0) {
             return res.status(400).json({ error: 'Invalid qty', received: signal.qty });
@@ -47,10 +58,10 @@ export default async function handler(req, res) {
 
         const orderData = {
             category: 'spot',
-            symbol: signal.symbol,
-            side: signal.side,
+            symbol,
+            side,
             orderType: 'Market',
-            qty,
+            qty: qty.toString(),
             timeInForce: 'GTC',
         };
 
