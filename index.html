@@ -60,7 +60,8 @@
         }
 
         #settings-modal,
-        #auto-modal {
+        #auto-modal,
+        #chat-modal {
             position: fixed;
             inset: 0;
             background: rgba(2, 6, 23, 0.85);
@@ -270,6 +271,38 @@
         </div>
     </div>
 
+    <div id="chat-modal">
+        <div class="modal-content border-t-4 border-t-cyan-500">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="message-circle" class="w-5 h-5 text-cyan-400"></i>
+                    AI Assistant
+                </h2>
+                <button onclick="toggleModal('chat-modal', false)" class="text-slate-500 hover:text-white"><i
+                        data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-xs text-slate-500">OpenRouter + CoinGecko</p>
+                <button onclick="clearChat()"
+                    class="bg-slate-900 border border-slate-800 text-slate-300 px-3 py-2 rounded-lg text-xs font-semibold hover:text-white hover:border-cyan-400 transition-all">
+                    Clear Chat
+                </button>
+            </div>
+
+            <div id="chat-messages" class="chat-scroll space-y-3 text-sm"></div>
+
+            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                <input id="chat-input" type="text" placeholder="Ask about markets, signals, or settings..."
+                    class="flex-1 bg-slate-950 border border-slate-800 text-white px-4 py-3 rounded-xl text-sm focus:border-cyan-400">
+                <button onclick="sendChat()"
+                    class="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-cyan-600/20">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
     <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/70">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
@@ -324,36 +357,6 @@
                 </button>
             </div>
         </div>
-
-        <section class="glass-panel p-6 rounded-2xl mb-8">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                <div class="flex items-center gap-2">
-                    <div
-                        class="bg-slate-900 border border-slate-800 w-9 h-9 rounded-lg flex items-center justify-center">
-                        <i data-lucide="message-circle" class="w-5 h-5 text-cyan-300"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-white">AI Assistant</h3>
-                        <p class="text-xs text-slate-500">Local demo · Add an API later</p>
-                    </div>
-                </div>
-                <button onclick="clearChat()"
-                    class="bg-slate-900 border border-slate-800 text-slate-300 px-3 py-2 rounded-lg text-xs font-semibold hover:text-white hover:border-cyan-400 transition-all">
-                    Clear Chat
-                </button>
-            </div>
-
-            <div id="chat-messages" class="chat-scroll space-y-3 text-sm"></div>
-
-            <div class="mt-4 flex flex-col sm:flex-row gap-2">
-                <input id="chat-input" type="text" placeholder="Ask about markets, signals, or settings..."
-                    class="flex-1 bg-slate-950 border border-slate-800 text-white px-4 py-3 rounded-xl text-sm focus:border-cyan-400">
-                <button onclick="sendChat()"
-                    class="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-cyan-600/20">
-                    Send
-                </button>
-            </div>
-        </section>
 
         <div id="coin-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
@@ -867,6 +870,12 @@
             }
         }
     </script>
+
+    <button onclick="toggleModal('chat-modal', true)"
+        class="fixed bottom-6 right-6 z-40 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-full shadow-lg shadow-cyan-600/30 flex items-center gap-2 text-sm font-semibold">
+        <i data-lucide="message-circle" class="w-4 h-4"></i>
+        AI Chat
+    </button>
 </body>
 
 </html>
