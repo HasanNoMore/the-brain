@@ -121,6 +121,17 @@
             border: 1px solid #1f2937;
         }
 
+        .chat-scroll {
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .chat-bubble {
+            border-radius: 14px;
+            padding: 10px 12px;
+            line-height: 1.4;
+        }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -314,6 +325,36 @@
             </div>
         </div>
 
+        <section class="glass-panel p-6 rounded-2xl mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div class="flex items-center gap-2">
+                    <div
+                        class="bg-slate-900 border border-slate-800 w-9 h-9 rounded-lg flex items-center justify-center">
+                        <i data-lucide="message-circle" class="w-5 h-5 text-cyan-300"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">AI Assistant</h3>
+                        <p class="text-xs text-slate-500">Local demo · Add an API later</p>
+                    </div>
+                </div>
+                <button onclick="clearChat()"
+                    class="bg-slate-900 border border-slate-800 text-slate-300 px-3 py-2 rounded-lg text-xs font-semibold hover:text-white hover:border-cyan-400 transition-all">
+                    Clear Chat
+                </button>
+            </div>
+
+            <div id="chat-messages" class="chat-scroll space-y-3 text-sm"></div>
+
+            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                <input id="chat-input" type="text" placeholder="Ask about markets, signals, or settings..."
+                    class="flex-1 bg-slate-950 border border-slate-800 text-white px-4 py-3 rounded-xl text-sm focus:border-cyan-400">
+                <button onclick="sendChat()"
+                    class="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-cyan-600/20">
+                    Send
+                </button>
+            </div>
+        </section>
+
         <div id="coin-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
         <div id="empty-state" class="hidden text-center py-20 animate-fade-in">
@@ -339,10 +380,14 @@
             bybitSecret: localStorage.getItem('bybit_secret') || ''
         };
 
+        const chatStorageKey = 'brain_chat_v1';
+        let chatHistory = JSON.parse(localStorage.getItem(chatStorageKey)) || [];
+
         window.onload = function () {
             renderPortfolio();
             startPriceUpdates();
             loadSettings();
+            initChat();
         };
 
         // --- MODAL LOGIC ---
@@ -377,6 +422,76 @@
             apiKeys = { tgToken: tToken, tgChat: tChat, bybitKey: bKey, bybitSecret: bSecret };
             toggleModal('settings-modal', false);
             alert("✅ Credentials Saved Securely");
+        }
+
+        // --- AI CHAT (LOCAL DEMO) ---
+        function initChat() {
+            if (!chatHistory.length) {
+                chatHistory = [
+                    { role: 'assistant', content: 'Hey! I’m your AI trading assistant. Connect an API to enable live chat.' }
+                ];
+                persistChat();
+            }
+            renderChat();
+
+            const input = document.getElementById('chat-input');
+            if (input) {
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        sendChat();
+                    }
+                });
+            }
+        }
+
+        function persistChat() {
+            localStorage.setItem(chatStorageKey, JSON.stringify(chatHistory));
+        }
+
+        function renderChat() {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+
+            container.innerHTML = '';
+            chatHistory.forEach((msg) => {
+                const bubble = document.createElement('div');
+                const isUser = msg.role === 'user';
+                bubble.className = `chat-bubble ${isUser ? 'bg-cyan-600/20 border border-cyan-500/30 ml-auto text-cyan-100' : 'bg-slate-900/70 border border-slate-800 text-slate-200'}`;
+                bubble.style.maxWidth = '85%';
+                bubble.innerText = msg.content;
+                container.appendChild(bubble);
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addChatMessage(role, content) {
+            chatHistory.push({ role, content });
+            persistChat();
+            renderChat();
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            if (!input) return;
+            const message = input.value.trim();
+            if (!message) return;
+
+            input.value = '';
+            addChatMessage('user', message);
+
+            setTimeout(() => {
+                addChatMessage('assistant', 'Thanks! Live AI replies are coming soon. Plug in your API key to enable full responses.');
+            }, 400);
+        }
+
+        function clearChat() {
+            chatHistory = [
+                { role: 'assistant', content: 'Chat cleared. Ask me anything when you’re ready.' }
+            ];
+            persistChat();
+            renderChat();
         }
 
         // --- TELEGRAM CONNECTION FIX ---
