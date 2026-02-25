@@ -1,0 +1,16 @@
+{
+    "claudeCode.useTerminal": true,
+    "debug.terminal.clearBeforeReusing": true,
+    "terminal.integrated.fontSize": 14,
+    "terminal.integrated.localEchoExcludePrograms": [
+        "vim",
+        "vi",
+        "nano",
+        "tmux",
+        ""
+    ],
+    "debug.javascript.terminalOptions": {
+
+    },
+    "chat.agent.maxRequests": 100
+}
