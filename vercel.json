@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/smart-scanner.ts": { "maxDuration": 60 }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/public/$1" }
+  ]
+}

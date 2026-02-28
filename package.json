@@ -1,0 +1,27 @@
+{
+  "name": "brain-bot-versol",
+  "version": "1.0.0",
+  "description": "AI-powered trading bot with Bybit, Telegram, and Discord integrations",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "watch": "ts-node-dev --respawn src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.3",
+    "@vercel/blob": "^2.3.0",
+    "axios": "^1.7.9",
+    "bybit-api": "^3.10.6",
+    "dotenv": "^16.4.7",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/node-telegram-bot-api": "^0.64.7",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.3"
+  }
+}

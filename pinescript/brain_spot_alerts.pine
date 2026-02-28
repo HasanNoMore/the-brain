@@ -1,0 +1,140 @@
+//@version=5
+strategy("The Brain — Spot Confluence v2", overlay=true, default_qty_type=strategy.cash, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.1)
+
+// ============================================
+// USE ON BYBIT PAIRS (TradingView):
+//   BYBIT:UNIUSDT   — Squeeze + Vol Divergence (91)
+//   BYBIT:DOTUSDT   — Squeeze + Vol Divergence (89)
+//   BYBIT:NEARUSDT  — Squeeze + Vol Divergence (88)
+//   BYBIT:STXUSDT   — Squeeze + Vol Divergence (88)
+//   BYBIT:LINKUSDT  — Squeeze + Vol Divergence (87)
+// TIMEFRAME: 1D (Daily)
+// ORDER SIZE: $10 USDT per coin
+//
+// WEBHOOK SETUP:
+//   1. Add this script to your chart
+//   2. Create Alert → Condition: "The Brain — Spot Confluence v2"
+//   3. Set to "Order fills only"
+//   4. In Message tab, paste this EXACTLY:
+//      {{strategy.order.alert_message}}
+//   5. In Notifications tab → Enable Webhook URL:
+//      https://the-brain-omega.vercel.app/api/webhook
+//   6. Create — done! Both BUY and SELL alerts work from ONE alert.
+// ============================================
+
+// === INPUTS ===
+// EMA
+fastLen     = input.int(9,  "Fast EMA", minval=2)
+slowLen     = input.int(21, "Slow EMA", minval=2)
+
+// RSI
+rsiLen      = input.int(14, "RSI Period", minval=2)
+rsiOversold = input.int(35, "RSI Oversold", minval=10, maxval=50)
+rsiOverbought = input.int(70, "RSI Overbought", minval=50, maxval=95)
+
+// Bollinger Squeeze
+bbLen       = input.int(20, "BB Period", minval=5)
+bbMult      = input.float(2.0, "BB StdDev", minval=0.5, step=0.1)
+sqzLookback = input.int(120, "Squeeze Lookback", minval=20)
+
+// Volume
+volLen      = input.int(20, "Volume MA Period", minval=5)
+volSpike    = input.float(1.3, "Volume Spike Multiplier", minval=1.0, step=0.1)
+
+// Risk Management
+slPct       = input.float(4.0, "Stop Loss %", minval=0.5, step=0.5)
+tpPct       = input.float(12.0, "Take Profit %", minval=1.0, step=0.5)
+trailPct    = input.float(5.0, "Trailing Stop %", minval=1.0, step=0.5)
+
+// === INDICATORS ===
+fastEMA = ta.ema(close, fastLen)
+slowEMA = ta.ema(close, slowLen)
+
+rsiVal  = ta.rsi(close, rsiLen)
+
+[bbMid, bbUpper, bbLower] = ta.bb(close, bbLen, bbMult)
+bbWidth = (bbUpper - bbLower) / bbMid * 100
+bbWidthMin = ta.lowest(bbWidth, sqzLookback)
+bbWidthAvg = ta.sma(bbWidth, sqzLookback)
+
+volMA   = ta.sma(volume, volLen)
+atrVal  = ta.atr(14)
+
+// === SIGNAL DETECTION ===
+
+// 1. Squeeze Detection — BB width near its lowest = coiled spring
+isSqueezed   = bbWidth < bbWidthAvg * 0.6
+isReleasing  = bbWidth[1] < bbWidthMin * 1.3 and bbWidth > bbWidth[1] * 1.05
+squeezeSignal = isSqueezed or isReleasing
+
+// 2. Trend Confirmation — EMA alignment
+trendUp      = fastEMA > slowEMA
+emaCrossUp   = ta.crossover(fastEMA, slowEMA)
+priceAboveEMA = close > fastEMA
+
+// 3. RSI Conditions
+rsiDip       = rsiVal > rsiOversold and rsiVal < 55
+rsiBullish   = rsiVal > 45 and rsiVal < rsiOverbought
+
+// 4. Volume Confirmation
+volConfirm   = volume > volMA * volSpike
+
+// 5. Volume Divergence — price falling but volume decreasing (sellers exhausted)
+priceLower   = ta.lowest(low, 10) == ta.lowest(low, 5)
+volDecreasing = volume < ta.sma(volume, 10) * 0.8
+volDivergence = priceLower and volDecreasing and rsiVal < 45
+
+// 6. Breakout Detection — price above recent high with volume
+recentHigh   = ta.highest(high, 20)[1]
+isBreakout   = close > recentHigh and volConfirm and rsiVal > 50 and rsiVal < 80
+
+// === ENTRY CONDITIONS ===
+// Primary: Squeeze release + trend confirmation
+entry1_squeeze = squeezeSignal and trendUp and rsiBullish and volConfirm
+// Secondary: Volume divergence reversal + EMA cross
+entry2_voldiv  = volDivergence and (emaCrossUp or (trendUp and priceAboveEMA))
+// Tertiary: Clean breakout
+entry3_breakout = isBreakout and trendUp
+
+// Combined entry — any confluence hit
+longEntry = entry1_squeeze or entry2_voldiv or entry3_breakout
+
+// === EXIT CONDITIONS ===
+rsiExit     = rsiVal > rsiOverbought
+emaCrossDown = ta.crossunder(fastEMA, slowEMA)
+longExit    = rsiExit or emaCrossDown
+
+// === DETERMINE SIGNAL TYPE ===
+signalType = entry1_squeeze ? "SQUEEZE" : entry2_voldiv ? "VOL_DIVERGENCE" : "BREAKOUT"
+
+// === EXECUTE STRATEGY WITH alert_message ===
+// The alert_message parameter is what gets sent to the webhook
+// when you set the alert message to {{strategy.order.alert_message}}
+
+if longEntry and strategy.position_size == 0
+    strategy.entry("BUY", strategy.long, alert_message='{"action": "buy", "symbol": "' + syminfo.ticker + '", "qty": "10", "price": "' + str.tostring(close) + '", "signal": "' + signalType + '"}')
+
+if longExit and strategy.position_size > 0
+    strategy.close("BUY", comment="Signal Exit", alert_message='{"action": "sell", "symbol": "' + syminfo.ticker + '", "qty": "all", "price": "' + str.tostring(close) + '", "signal": "EXIT"}')
+
+// Stop Loss & Take Profit & Trailing Stop
+if strategy.position_size > 0
+    entryPrice = strategy.position_avg_price
+    sl = entryPrice * (1 - slPct / 100)
+    tp = entryPrice * (1 + tpPct / 100)
+    strategy.exit("TP/SL", "BUY", stop=sl, limit=tp, trail_price=entryPrice * (1 + trailPct / 100 * 0.5), trail_offset=atrVal * 2, alert_message='{"action": "sell", "symbol": "' + syminfo.ticker + '", "qty": "all", "price": "' + str.tostring(close) + '", "signal": "TP_SL_TRAIL"}')
+
+// === PLOTS ===
+plot(fastEMA, "Fast EMA", color=color.new(#6366f1, 0), linewidth=2)
+plot(slowEMA, "Slow EMA", color=color.new(#a78bfa, 0), linewidth=1)
+
+// Squeeze background
+bgcolor(isSqueezed ? color.new(#6366f1, 92) : isReleasing ? color.new(#34d399, 90) : na, title="Squeeze Zone")
+
+// Entry/Exit markers
+plotshape(longEntry and strategy.position_size == 0, "BUY Signal", shape.triangleup, location.belowbar, color.new(#34d399, 0), size=size.small)
+plotshape(longExit and strategy.position_size > 0, "SELL Signal", shape.triangledown, location.abovebar, color.new(#f87171, 0), size=size.small)
+
+// Signal labels
+if longEntry and strategy.position_size[1] == 0
+    label.new(bar_index, low, signalType, style=label.style_label_up, color=color.new(#6366f1, 10), textcolor=color.white, size=size.small)

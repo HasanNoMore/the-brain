@@ -1,0 +1,59 @@
+name: Brain Bot — Primary Cron Engine
+
+# GitHub Actions = primary cron. Completely independent from Vercel.
+# Free: 2,000 minutes/month. Bot uses ~3s per run × 288 runs/day = ~14 min/day = 420 min/month
+# cron-job.org remains as a THIRD backup layer
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'    # Scanner + auto-trade every 5 min
+    - cron: '0 8 * * *'      # Daily coin picker at 08:00 UTC
+    - cron: '5 8 * * *'      # Track yesterday picks at 08:05 UTC
+    - cron: '0 0 * * *'      # Daily watchdog at 00:00 UTC
+  workflow_dispatch:          # Manual trigger from GitHub UI anytime
+
+jobs:
+  scanner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Run Brain Bot Scanner
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BOT_URL: ${{ secrets.BOT_URL }}
+        run: |
+          URL="${BOT_URL:-https://the-brain-omega.vercel.app}"
+          SCHEDULE="${{ github.event.schedule }}"
+
+          if   [ "$SCHEDULE" = "0 8 * * *" ]; then
+            ACTION="?action=dailyPick"
+          elif [ "$SCHEDULE" = "5 8 * * *" ]; then
+            ACTION="?action=trackPicks"
+          elif [ "$SCHEDULE" = "0 0 * * *" ]; then
+            ACTION="?action=watchdog"
+          else
+            ACTION="?alert=1"
+          fi
+
+          HTTP=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            "${URL}/api/smart-scanner${ACTION}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            --max-time 90)
+
+          echo "Action: ${ACTION} | HTTP: ${HTTP}"
+
+          if [ "$HTTP" = "200" ]; then
+            echo "✅ Success"
+            # Show key result fields
+            cat /tmp/response.json | python3 -c "
+import sys,json
+try:
+  d=json.load(sys.stdin)
+  print(f'Scanned: {d.get(\"scanned\",\"?\")} | Trades: {d.get(\"tradesPlaced\",0)} | Alerts: {d.get(\"alertsSent\",0)}')
+except: pass
+" 2>/dev/null || true
+          else
+            echo "❌ Failed with HTTP ${HTTP}"
+            cat /tmp/response.json | head -200 || true
+            # Don't fail the workflow — just log it
+          fi

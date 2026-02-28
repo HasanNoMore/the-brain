@@ -1,3 +1,6 @@
+
+
+
 {
     "claudeCode.useTerminal": true,
     "debug.terminal.clearBeforeReusing": true,
@@ -12,5 +15,22 @@
     "debug.javascript.terminalOptions": {
 
     },
-    "chat.agent.maxRequests": 100
+    "chat.agent.maxRequests": 100,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p",
+        "*test.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "workbench.editor.closeOnFileDelete": true,
+    "workbench.editor.defaultBinaryEditor": "default",
+    "workbench.editor.enablePreviewFromCodeNavigation": true,
+    "workbench.editor.enablePreviewFromQuickOpen": true,
+    "workbench.editor.highlightModifiedTabs": true,
+    "terminal.integrated.commandsToSkipShell": [
+        ""
+    ]
 }
