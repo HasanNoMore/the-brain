@@ -74,20 +74,15 @@ interface Strategy {
 }
 
 const STRATEGY_DEFINITIONS: Omit<Strategy, 'enabled' | 'trades' | 'wins' | 'losses' | 'pnl'>[] = [
-  // === CORE STRATEGIES ===
-  { id: 'scanner_signal',   name: 'Scanner Signal',      description: 'Multi-indicator BUY/STRONG_BUY with multi-timeframe confirmation — the core brain signal' },
-  { id: 'rsi_reversal',     name: 'RSI Reversal',        description: 'Oversold bounce — RSI < 35 with hourly RSI recovering + StochRSI confirmation' },
-  { id: 'bollinger_bounce', name: 'Bollinger Bounce',    description: 'Mean reversion at lower Bollinger Band — statistical edge when price hits 2 std devs below' },
-  { id: 'dip_buyer',        name: 'Dip Buyer',           description: 'Catches 3%+ dips with volume confirmation — falling knife catcher with RSI safety net' },
-  { id: 'early_gainer',     name: 'Early Gainer',        description: 'Hourly volume surge (2x+) with positive price action — catches moves before they explode' },
+  // Removed: scanner_signal (circular logic), supertrend_ride (too many false flips in choppy markets), vwap_reclaim (incompatible with cron architecture)
+  { id: 'rsi_reversal',     name: 'RSI Reversal',        description: 'RSI < 30 (real oversold) + 1h RSI higher than 4h (bounce started) + daily RSI < 40 — no adaptive loosening in bear' },
+  { id: 'bollinger_bounce', name: 'Bollinger Bounce',    description: 'Price at lower BB + StochRSI < 20 or bullish divergence required — BB squeeze release excluded' },
+  { id: 'dip_buyer',        name: 'Dip Buyer',           description: 'Real dip: -5% minimum (-8% in bear), volume > 2x, RSI < 30, StochRSI < 20, last hour recovering — STRICTER in bear' },
+  { id: 'early_gainer',     name: 'Early Gainer',        description: '3x+ hourly volume spike with 1%+ price gain and RSI 40-65 — fixed threshold, no adaptive loosening' },
   { id: 'dca_accumulator',  name: 'DCA Accumulator',     description: 'Dollar Cost Averaging — buys dips at set intervals, stacks into position, exits at avg-price profit target' },
-  // === PRO STRATEGIES ===
-  { id: 'divergence_play',  name: 'Divergence Play',     description: 'RSI bullish divergence — price makes lower low but RSI makes higher low: highest conviction reversal signal' },
-  { id: 'supertrend_ride',  name: 'Supertrend Ride',     description: 'ATR-based trend flip detection — buys when Supertrend flips from bearish to bullish with momentum' },
-  { id: 'smart_money',      name: 'Smart Money',         description: 'OBV breakout + positive money flow (CMF) — detects institutional accumulation while retail panics' },
-  // === ADVANCED STRATEGIES ===
-  { id: 'vwap_reclaim',     name: 'VWAP Reclaim',        description: 'Price reclaims 24h VWAP with volume — institutional re-entry signal after a shakeout' },
-  { id: 'panic_reversal',   name: 'Panic Reversal',      description: 'Extreme hourly drop (-3%+) with capitulation volume + deep oversold RSI — buys the forced-seller exhaustion' },
+  { id: 'divergence_play',  name: 'Divergence Play',     description: 'Bullish RSI divergence + CMF > 0 (money flow confirms) + volume confirmation — blocked in strong_bear' },
+  { id: 'smart_money',      name: 'Smart Money',         description: 'OBV breakout + CMF > 0.10 (meaningful buying, not noise) + volume 1.5x+ + OBV trend positive' },
+  { id: 'panic_reversal',   name: 'Panic Reversal',      description: 'Extreme panic: -5%+ hourly drop, 3x+ volume, RSI < 20 AND StochRSI < 10 — triggers 2-3x/month max' },
 ];
 
 // ============================================================
@@ -97,25 +92,27 @@ const STRATEGY_DEFINITIONS: Omit<Strategy, 'enabled' | 'trades' | 'wins' | 'loss
 // Bull market: tighter filters to avoid chasing
 // ============================================================
 function getAdaptiveThresholds(regime: MarketRegime) {
+  // FIXED: Bear markets are STRICTER, not looser.
+  // Higher volatility = higher bar to enter. The old logic was backwards.
   const t = {
-    // Scanner signal min strength
-    scannerStrength:    regime === 'strong_bull' ? 55 : regime === 'bull' ? 50 : 35,
-    // RSI oversold threshold
-    rsiOversold:        regime === 'strong_bear' ? 45 : regime === 'bear' ? 42 : 35,
-    // Dip buyer: min 24h drop %
-    dipPercent:         regime === 'strong_bear' ? -2.5 : regime === 'bear' ? -3 : -5,
-    // Dip buyer: min volume
-    dipVolume:          regime === 'strong_bear' ? 0.3 : regime === 'bear' ? 0.5 : 1.0,
-    // Dip buyer: max RSI
-    dipRsi:             regime === 'strong_bear' ? 50 : regime === 'bear' ? 47 : 40,
-    // Early gainer vol spike
-    earlyGainerVol:     regime === 'strong_bear' ? 1.5 : regime === 'bear' ? 2.0 : 3.0,
-    // Bollinger RSI max
-    bbRsi:              regime === 'strong_bear' ? 52 : regime === 'bear' ? 48 : 42,
-    // Panic reversal 1h drop threshold
-    panicDrop:          regime === 'strong_bear' ? -2.0 : -3.0,
-    panicRsi:           regime === 'strong_bear' ? 30 : 25,
-    panicVol:           regime === 'strong_bear' ? 1.2 : 1.8,
+    // Scanner strength (scanner_signal removed — kept for any future use)
+    scannerStrength:    regime === 'strong_bull' ? 55 : regime === 'bull' ? 50 : 45,
+    // RSI oversold: stricter in bear (require MORE oversold to enter)
+    rsiOversold:        regime === 'strong_bear' ? 25 : regime === 'bear' ? 28 : regime === 'neutral' ? 32 : 38,
+    // Dip buyer: require BIGGER drop in bear markets
+    dipPercent:         regime === 'strong_bear' ? -10 : regime === 'bear' ? -8 : regime === 'neutral' ? -5 : -3,
+    // Dip buyer: require MORE volume confirmation in bear
+    dipVolume:          regime === 'strong_bear' ? 2.5 : regime === 'bear' ? 2.0 : 1.0,
+    // Dip buyer: require MORE oversold RSI in bear
+    dipRsi:             regime === 'strong_bear' ? 22 : regime === 'bear' ? 28 : 35,
+    // Early gainer: require STRONGER volume spike in bear (noise filter)
+    earlyGainerVol:     regime === 'strong_bear' ? 5.0 : regime === 'bear' ? 4.0 : regime === 'neutral' ? 3.0 : 2.5,
+    // Bollinger RSI: require MORE oversold in bear
+    bbRsi:              regime === 'strong_bear' ? 28 : regime === 'bear' ? 32 : regime === 'neutral' ? 38 : 45,
+    // Panic reversal: fixed thresholds — never loosened
+    panicDrop:          -5.0,
+    panicRsi:           20,
+    panicVol:           3.0,
   };
   return t;
 }
@@ -125,75 +122,92 @@ let _currentRegime: MarketRegime = 'neutral';
 
 function evaluateStrategies(sig: SmartSignal, enabledStrategies: string[]): string[] {
   const matched: string[] = [];
-  const T = getAdaptiveThresholds(_currentRegime);
+  // Removed: scanner_signal (circular logic), supertrend_ride (false flips in choppy markets), vwap_reclaim (needs real-time, incompatible with cron)
 
-  // 1. Scanner Signal — auto-adapts strength threshold by regime
-  if (enabledStrategies.includes('scanner_signal')) {
-    if ((sig.action === 'buy' || sig.action === 'strong_buy') && sig.strength >= T.scannerStrength) {
-      matched.push('scanner_signal');
-    }
-  }
-
-  // 2. RSI Reversal — auto-adapts RSI threshold by regime
+  // 1. RSI Reversal — hard thresholds, no adaptive loosening in bear markets
   if (enabledStrategies.includes('rsi_reversal')) {
-    if (sig.rsi < T.rsiOversold && (sig.signals.includes('RSI REVERSAL') || sig.stochRsi < 25) && sig.change1h > -8) {
+    if (
+      sig.rsi < 30 &&          // real oversold — not adaptive (old: up to 45 in strong_bear)
+      sig.rsi1h > sig.rsi &&   // 1h RSI higher than 4h RSI: bounce already started
+      sig.dailyRsi < 40 &&     // macro context agrees: daily also oversold
+      sig.change1h > -5        // not in a live crash right now
+    ) {
       matched.push('rsi_reversal');
     }
   }
 
-  // 3. Bollinger Bounce — auto-adapts RSI threshold
+  // 2. Bollinger Bounce — requires reversal confirmation, not just touching the band
   if (enabledStrategies.includes('bollinger_bounce')) {
-    if (sig.price <= sig.bollingerLower * 1.015 && sig.rsi < T.bbRsi && sig.momentum > -50) {
+    if (
+      sig.price <= sig.bollingerLower * 1.015 &&      // at or below lower BB
+      (sig.stochRsi < 20 || sig.bullDivergence) &&    // reversal signal required — old code had none
+      sig.momentum > -50 &&                            // not in free fall
+      sig.change1h > -3 &&                             // slight recovery or stabilizing
+      !sig.bbSqueezeRelease                            // BB expanding = trend continuation, not reversal
+    ) {
       matched.push('bollinger_bounce');
     }
   }
 
-  // 4. Dip Buyer — fully adaptive: drop%, volume, RSI all adjust to regime
+  // 3. Dip Buyer — STRICTER in bear, not looser (old logic was backwards)
   if (enabledStrategies.includes('dip_buyer')) {
-    if (sig.change24h <= T.dipPercent && sig.volumeAnomaly >= T.dipVolume && sig.rsi < T.dipRsi) {
+    const dipThreshold = (_currentRegime === 'bear' || _currentRegime === 'strong_bear') ? -8 : -5;
+    if (
+      sig.change24h <= dipThreshold &&  // real dip: -5% normal, -8% in bear (old: -2.5% in strong_bear)
+      sig.volumeAnomaly >= 2.0 &&       // real capitulation (old: 0.3x in strong_bear)
+      sig.rsi < 30 &&                   // deeply oversold
+      sig.stochRsi < 20 &&              // confirmed oversold
+      sig.change1h > 0                  // last hour showing recovery — not still falling
+    ) {
       matched.push('dip_buyer');
     }
   }
 
-  // 5. Early Gainer — volume spike threshold auto-adjusts
+  // 4. Early Gainer — fixed 3x minimum, no adaptive loosening
   if (enabledStrategies.includes('early_gainer')) {
-    if (sig.hourlyVolSpike >= T.earlyGainerVol && sig.change1h > 0.2 && sig.rsi < 72) {
+    if (
+      sig.hourlyVolSpike >= 3.0 &&      // real unusual activity (old: 1.5x in strong_bear)
+      sig.change1h > 1.0 &&             // price actually moving up (old: 0.2%)
+      sig.rsi >= 40 && sig.rsi < 65     // not overbought, not deeply oversold
+    ) {
       matched.push('early_gainer');
     }
   }
 
-  // 6. Divergence Play — RSI bullish divergence
+  // 5. Divergence Play — improved: money flow + volume confirmation + blocked in strong_bear
   if (enabledStrategies.includes('divergence_play')) {
-    if (sig.bullDivergence && sig.rsi < 60 && sig.momentum > -50) {
+    if (
+      sig.bullDivergence &&
+      sig.cmf > 0 &&                    // money flow confirms (old: not checked)
+      sig.volumeAnomaly > 1.0 &&        // volume confirms the divergence (old: not checked)
+      sig.rsi < 60 &&
+      _currentRegime !== 'strong_bear'  // no divergence trades in strong bear (old: not checked)
+    ) {
       matched.push('divergence_play');
     }
   }
 
-  // 7. Supertrend Ride — ATR-based trend flip
-  if (enabledStrategies.includes('supertrend_ride')) {
-    if (sig.supertrendFlip && sig.momentum > -10 && sig.rsi < 70) {
-      matched.push('supertrend_ride');
-    }
-  }
-
-  // 8. Smart Money — institutional accumulation
+  // 6. Smart Money — tightened: CMF 0.10 minimum, OBV trend confirmed
   if (enabledStrategies.includes('smart_money')) {
-    if (sig.obvBreakout && sig.cmf > 0.03 && sig.rsi < 70 && sig.momentum > -20) {
+    if (
+      sig.obvBreakout &&
+      sig.cmf > 0.10 &&               // meaningful buying (old: 0.03 — too low, any bull had this)
+      sig.volumeAnomaly >= 1.5 &&     // confirms OBV breakout is real (old: not checked)
+      sig.obvTrend > 0 &&             // OBV in uptrend (old: not checked)
+      sig.rsi < 70
+    ) {
       matched.push('smart_money');
     }
   }
 
-  // 9. VWAP Reclaim
-  if (enabledStrategies.includes('vwap_reclaim')) {
-    if (sig.vwap > 0 && sig.price > sig.vwap && sig.price < sig.vwap * 1.02 &&
-        sig.volumeAnomaly >= 0.8 && sig.rsi > 30 && sig.rsi < 68) {
-      matched.push('vwap_reclaim');
-    }
-  }
-
-  // 10. Panic Reversal — fully adaptive thresholds
+  // 7. Panic Reversal — fixed strict thresholds, no adaptive loosening
   if (enabledStrategies.includes('panic_reversal')) {
-    if (sig.change1h <= T.panicDrop && sig.rsi < T.panicRsi && sig.volumeAnomaly >= T.panicVol && sig.stochRsi < 20) {
+    if (
+      sig.change1h <= -5.0 &&         // real panic (old: -2.0% in strong_bear — just normal volatility)
+      sig.volumeAnomaly >= 3.0 &&     // actual capitulation (old: 1.2x in strong_bear)
+      sig.rsi < 20 &&                 // extreme oversold (old: < 30 in strong_bear)
+      sig.stochRsi < 10               // confirmed extreme (old: < 20)
+    ) {
       matched.push('panic_reversal');
     }
   }
@@ -278,6 +292,7 @@ interface Position {
   peakPrice?: number;  // highest price since entry (for trailing stop)
   tp1?: number;        // TP1 price level (set at entry if tp1Percent > 0)
   tp1Hit?: boolean;    // Whether TP1 partial sell already executed
+  slOrderId?: string;  // Bybit server-side conditional SL order ID
 }
 
 interface DailyPick {
@@ -340,17 +355,16 @@ const DEFAULT_CONFIG: TradingConfig = {
   aiBrainEnabled: false,        // AI Brain OFF by default
 };
 
-// Sniper strategy set: only high-quality, multi-condition strategies ON by default
+// 8 kept strategies — scanner_signal, supertrend_ride, vwap_reclaim removed per STRATEGY_PLAN.md
 const DEFAULT_ENABLED_STRATEGIES = new Set([
-  'scanner_signal',    // Core multi-indicator — must-have
-  'rsi_reversal',      // Oversold bounce — key bear market strategy
-  'bollinger_bounce',  // Mean reversion at lower band
-  'dip_buyer',         // Catches 3%+ dips with volume
-  'early_gainer',      // Hourly vol surge — catches early moves
-  'divergence_play',   // Highest conviction reversal signal
-  'smart_money',       // Institutional accumulation detection
-  'vwap_reclaim',      // Institutional re-entry after shakeout
-  'panic_reversal',    // Capitulation exhaustion — best bear market signal
+  'rsi_reversal',      // RSI < 30 + 1h RSI recovery + daily RSI < 40
+  'bollinger_bounce',  // Lower BB + StochRSI < 20 or divergence required
+  'dip_buyer',         // -5% min (-8% in bear), 2x vol, RSI < 30, recovering
+  'early_gainer',      // 3x+ hourly vol spike, 1%+ price gain, RSI 40-65
+  'dca_accumulator',   // DCA into whitelisted coins
+  'divergence_play',   // Bullish divergence + CMF + volume confirmation
+  'smart_money',       // OBV breakout + CMF > 0.10 + vol 1.5x+
+  'panic_reversal',    // -5%+ hourly, 3x vol, RSI < 20, StochRSI < 10
 ]);
 
 function getDefaultStrategies(): Strategy[] {
@@ -366,7 +380,11 @@ const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL || '';
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || '';
 const REDIS_KEY = 'trading-state';
 
+// _stateLoadedFromRedis: true = safe to trade, false = Redis failed → block all trades
+let _stateLoadedFromRedis = false;
+
 async function loadState(): Promise<TradingState> {
+  _stateLoadedFromRedis = false;
   try {
     const r = await fetch(`${UPSTASH_URL}/get/${REDIS_KEY}`, {
       headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
@@ -404,12 +422,15 @@ async function loadState(): Promise<TradingState> {
         if (!state.dcaStacks) state.dcaStacks = [];
         if (!state.dcaHistory) state.dcaHistory = [];
         if (!state.dailyPicks) state.dailyPicks = [];
+        _stateLoadedFromRedis = true;
         return state;
       }
     }
   } catch {}
+  // Redis failed — return safe shell with trading DISABLED to prevent wrong-amount trades
+  console.error('[STATE] Redis load FAILED — trading blocked until state is verified');
   return {
-    config: { ...DEFAULT_CONFIG },
+    config: { ...DEFAULT_CONFIG, enabled: false },
     strategies: getDefaultStrategies(),
     positions: [],
     history: [],
@@ -423,7 +444,7 @@ async function loadState(): Promise<TradingState> {
   };
 }
 
-async function saveState(state: TradingState): Promise<void> {
+async function saveState(state: TradingState, tgToken?: string, tgChat?: string): Promise<void> {
   if (state.history.length > 200) state.history = state.history.slice(-200);
   const now = Date.now();
   for (const [sym, ts] of Object.entries(state.cooldowns)) {
@@ -431,14 +452,28 @@ async function saveState(state: TradingState): Promise<void> {
       delete state.cooldowns[sym];
     }
   }
-  await fetch(`${UPSTASH_URL}/set/${REDIS_KEY}`, {
+  const body = JSON.stringify(state);
+  const doSave = () => fetch(`${UPSTASH_URL}/set/${REDIS_KEY}`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${UPSTASH_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(state),
+    headers: { Authorization: `Bearer ${UPSTASH_TOKEN}`, 'Content-Type': 'application/json' },
+    body,
   });
+
+  // Bug #9 fix: retry once on failure. If both fail, send emergency Telegram alert.
+  // A failed save after a real trade = bot forgets the position = no SL/TP ever executes.
+  let r = await doSave();
+  if (!r.ok) {
+    await new Promise(res => setTimeout(res, 2000));
+    r = await doSave();
+  }
+  if (!r.ok) {
+    const err = await r.text().catch(() => 'unknown');
+    console.error(`[STATE] Redis save FAILED after retry: HTTP ${r.status} — ${err}`);
+    if (tgToken && tgChat) {
+      await sendTelegramAlert(tgToken, tgChat,
+        `🚨 CRITICAL: STATE SAVE FAILED\n\nOpen positions may not be tracked!\nBot cannot manage SL/TP until state is restored.\nHTTP ${r.status} — ${err}\n\nCheck bot immediately.`);
+    }
+  }
 }
 
 // === INDICATORS ===
@@ -1123,7 +1158,9 @@ async function aiFilterSignal(
   sig: SmartSignal, regime: MarketRegime, recentTrades: any[],
 ): Promise<AITradeDecision> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { action: 'APPROVE', confidence: 50, reasoning: 'AI unavailable' };
+  // Bug #4 fix: if AI Brain is enabled but can't be reached for ANY reason, default to REJECT.
+  // Approving on error means every API failure = unfiltered trade. That's dangerous.
+  if (!apiKey) return { action: 'REJECT', confidence: 0, reasoning: 'AI Brain enabled but ANTHROPIC_API_KEY not configured' };
   try {
     const recentPerf = recentTrades.slice(-5).map((t: any) =>
       `${t.symbol}: ${t.pnlPercent >= 0 ? '+' : ''}${t.pnlPercent?.toFixed(1)}% (${t.strategy})`
@@ -1145,14 +1182,14 @@ Reply ONLY with JSON: {"action":"APPROVE"|"REJECT","confidence":0-100,"reasoning
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 150, messages: [{ role: 'user', content: prompt }] }),
     });
     clearTimeout(timeout);
-    if (!response.ok) return { action: 'APPROVE', confidence: 50, reasoning: 'AI API error' };
+    if (!response.ok) return { action: 'REJECT', confidence: 0, reasoning: `AI API error: HTTP ${response.status}` };
     const d = (await response.json()) as any;
     const text = d.content?.[0]?.text || '';
     const m = text.match(/\{[\s\S]*\}/);
-    if (m) { const p = JSON.parse(m[0]); return { action: p.action || 'APPROVE', confidence: p.confidence || 50, reasoning: p.reasoning || '' }; }
-    return { action: 'APPROVE', confidence: 50, reasoning: 'Parse error' };
+    if (m) { const p = JSON.parse(m[0]); return { action: p.action || 'REJECT', confidence: p.confidence ?? 0, reasoning: p.reasoning || '' }; }
+    return { action: 'REJECT', confidence: 0, reasoning: 'AI response could not be parsed — trade blocked for safety' };
   } catch (e: any) {
-    return { action: 'APPROVE', confidence: 50, reasoning: `Error: ${e.message}` };
+    return { action: 'REJECT', confidence: 0, reasoning: `AI unreachable: ${e.message}` };
   }
 }
 
@@ -1208,68 +1245,60 @@ function formatPrice(p: number): string {
   return p >= 1000 ? '$' + Math.round(p).toLocaleString() : p >= 1 ? '$' + p.toFixed(2) : '$' + p.toFixed(6);
 }
 
+// Dynamic price rounding — avoids SL/TP being rounded to same value for low-price coins
+function roundPrice(p: number): number {
+  if (p >= 1000) return Math.round(p * 100) / 100;   // $1234.56
+  if (p >= 100)  return Math.round(p * 100) / 100;   // $123.45
+  if (p >= 10)   return Math.round(p * 1000) / 1000; // $12.345
+  if (p >= 1)    return Math.round(p * 1000) / 1000; // $1.234
+  if (p >= 0.1)  return Math.round(p * 10000) / 10000; // $0.1234
+  if (p >= 0.01) return Math.round(p * 100000) / 100000; // $0.01234
+  return Math.round(p * 1000000) / 1000000; // $0.001234
+}
+
 async function sendSignalAlerts(signals: SmartSignal[], tgToken: string, tgChat: string, state: TradingState) {
   let alertsSent = 0;
-  const MAX_ALERTS_PER_RUN = 6;          // hard cap per cron cycle
-  const ALERT_TTL_MS = 6 * 60 * 60 * 1000; // 6h deduplication — no repeat same coin+type
+  const MAX_ALERTS_PER_RUN = 2;            // max 2 alerts per cron cycle
+  const ALERT_TTL_MS = 12 * 60 * 60 * 1000; // 12h dedup — same coin won't alert twice in 12h
   const now = Date.now();
 
-  // Use state.alertTimes (persisted in main state.json) — immune to Blob CDN delays
   if (!state.alertTimes) state.alertTimes = {};
   const at = state.alertTimes;
 
-  // Prune entries older than 24h to keep the object small
+  // Prune old entries
   for (const k of Object.keys(at)) {
     if (now - at[k] > 24 * 3600000) delete at[k];
   }
 
-  const earlyGainers = signals.filter(s => s.category === 'early_gainer' && s.strength >= 55);
+  // Only strongest early gainers (strength >= 70, not just 55)
+  const earlyGainers = signals.filter(s => s.category === 'early_gainer' && s.strength >= 70);
   for (const s of earlyGainers) {
     if (alertsSent >= MAX_ALERTS_PER_RUN) break;
     const key = `${s.symbol}_early_gainer`;
     if (at[key] && now - at[key] < ALERT_TTL_MS) continue;
     at[key] = now;
-    const volEmoji = s.volumeAnomaly >= 3 ? '🔴🔴🔴' : s.volumeAnomaly >= 2 ? '🔴🔴' : '🔴';
-    const msg = `🚨 EARLY GAINER DETECTED\n\nCoin: ${s.symbol}\nPrice: ${formatPrice(s.price)}\n` +
-      `1h: ${s.change1h >= 0 ? '+' : ''}${s.change1h}% | 24h: ${s.change24h >= 0 ? '+' : ''}${s.change24h}%\n\n` +
-      `${volEmoji} Vol: ${s.volumeAnomaly.toFixed(1)}x | Mom: ${s.momentum} | RSI: ${s.rsi.toFixed(0)}\n` +
-      `💪 Strength: ${s.strength}% | 🎯 Conf: ${s.confidence}%\n\n` +
-      `${s.signals.join(' | ')}\n${s.reason}\n\n` +
-      `⚡ ${s.action.toUpperCase()}`;
+    const msg = `🚨 EARLY GAINER\n\n${s.symbol} @ ${formatPrice(s.price)}\n` +
+      `1h: ${s.change1h >= 0 ? '+' : ''}${s.change1h}% | Vol: ${s.volumeAnomaly.toFixed(1)}x\n` +
+      `Strength: ${s.strength}% | RSI: ${s.rsi.toFixed(0)}\n${s.signals.slice(0,3).join(' | ')}`;
     await sendTelegramAlert(tgToken, tgChat, msg);
     alertsSent++;
   }
 
-  const breakouts = signals.filter(s => s.category === 'breakout' && s.strength >= 55);
-  for (const s of breakouts) {
-    if (alertsSent >= MAX_ALERTS_PER_RUN) break;
-    const key = `${s.symbol}_breakout`;
-    if (at[key] && now - at[key] < ALERT_TTL_MS) continue;
-    at[key] = now;
-    const msg = `📈 BREAKOUT\n\n${s.symbol} @ ${formatPrice(s.price)}\n` +
-      `24h: ${s.change24h >= 0 ? '+' : ''}${s.change24h}% | Vol: ${s.volumeAnomaly.toFixed(1)}x\n` +
-      `Strength: ${s.strength}% | ${s.reason}\n${s.action.toUpperCase()}`;
-    await sendTelegramAlert(tgToken, tgChat, msg);
-    alertsSent++;
+  // Only real breakouts (strength >= 70)
+  if (alertsSent < MAX_ALERTS_PER_RUN) {
+    const breakouts = signals.filter(s => s.category === 'breakout' && s.strength >= 70);
+    for (const s of breakouts) {
+      if (alertsSent >= MAX_ALERTS_PER_RUN) break;
+      const key = `${s.symbol}_breakout`;
+      if (at[key] && now - at[key] < ALERT_TTL_MS) continue;
+      at[key] = now;
+      const msg = `📈 BREAKOUT\n\n${s.symbol} @ ${formatPrice(s.price)}\n` +
+        `24h: ${s.change24h >= 0 ? '+' : ''}${s.change24h}% | Str: ${s.strength}%\n${s.reason.split(' | ')[0]}`;
+      await sendTelegramAlert(tgToken, tgChat, msg);
+      alertsSent++;
+    }
   }
 
-  // Raised to 72 — only genuinely strong signals pass (prevents bull-market noise spam)
-  const strongBuys = signals.filter(s =>
-    (s.action === 'strong_buy' || s.action === 'buy') && s.strength >= 72 &&
-    s.category !== 'early_gainer' && s.category !== 'breakout'
-  );
-  for (const s of strongBuys) {
-    if (alertsSent >= MAX_ALERTS_PER_RUN) break;
-    const key = `${s.symbol}_${s.category}`;
-    if (at[key] && now - at[key] < ALERT_TTL_MS) continue;
-    at[key] = now;
-    const msg = `🧠 BRAIN SIGNAL\n\n${s.symbol} — ${s.action.toUpperCase()}\n` +
-      `${formatPrice(s.price)} | Str: ${s.strength}% | ${s.category}\n${s.reason}`;
-    await sendTelegramAlert(tgToken, tgChat, msg);
-    alertsSent++;
-  }
-
-  // alertTimes is saved when state is persisted (no extra blob needed)
   return alertsSent;
 }
 
@@ -1318,7 +1347,7 @@ async function checkAndClosePositions(
       if (config.trailingStopPercent > 0 && pos.peakPrice) {
         const trailSL = pos.peakPrice * (1 - config.trailingStopPercent / 100);
         if (trailSL > pos.stopLoss) {
-          pos.stopLoss = Math.round(trailSL * 100) / 100;
+          pos.stopLoss = roundPrice(trailSL);
         }
       }
 
@@ -1378,14 +1407,42 @@ async function checkAndClosePositions(
       }
 
       if (shouldClose) {
+        // Cancel server-side SL order first to prevent double-sell
+        if (pos.slOrderId) {
+          try {
+            await client.cancelOrder({ category: 'spot', symbol: `${pos.symbol}USDT`, orderId: pos.slOrderId });
+          } catch {}
+        }
+
+        // Bug #2 fix: check actual wallet balance before selling — pos.qty can drift from real balance
+        let sellQty = pos.qty;
+        try {
+          const balRes = await client.getWalletBalance({ accountType: 'UNIFIED', coin: pos.symbol });
+          const coinBal = balRes.result?.list?.[0]?.coin?.find((c: any) => c.coin === pos.symbol);
+          const actualQty = parseFloat(coinBal?.availableToWithdraw || '0');
+          if (actualQty <= 0) {
+            // Ghost position — coin not in wallet, purge from state
+            pos.status = 'closed_manual';
+            pos.closePrice = currentPrice;
+            pos.closeTime = new Date().toISOString();
+            pos.pnl = 0; pos.pnlPercent = 0;
+            state.positions = state.positions.filter(p => p.id !== pos.id);
+            state.history.push(pos);
+            if (tgToken && tgChat) await sendTelegramAlert(tgToken, tgChat,
+              `⚠️ GHOST POSITION PURGED | ${pos.symbol}\nCoin not in wallet — auto-removed from state`);
+            continue;
+          }
+          sellQty = Math.min(pos.qty, actualQty);
+        } catch {}
+
         const closeResult = await client.submitOrder({
-          category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(pos.qty),
+          category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(sellQty),
         });
 
         if (closeResult.retCode !== 0) {
           console.error(`[AUTO-TRADE] Sell order failed for ${pos.symbol}: ${closeResult.retMsg}`);
         } else {
-          const pnl = (currentPrice - pos.entryPrice) * pos.qty;
+          const pnl = (currentPrice - pos.entryPrice) * sellQty;
           pos.status = closeReason;
           pos.closePrice = currentPrice;
           pos.closeTime = new Date().toISOString();
@@ -1445,17 +1502,18 @@ async function checkAndClosePositions(
 async function executeTrades(
   signals: SmartSignal[], state: TradingState, client: RestClientV5, tgToken: string, tgChat: string,
 ): Promise<number> {
-  const config = state.config;
-  if (!config.enabled) {
-    if (tgToken && tgChat) await sendTelegramAlert(tgToken, tgChat, `⚙️ DEBUG: executeTrades skipped — config.enabled=false`);
+  // SAFETY: if Redis failed to load, _stateLoadedFromRedis=false — never trade with fallback defaults
+  if (!_stateLoadedFromRedis) {
+    if (tgToken && tgChat) await sendTelegramAlert(tgToken, tgChat,
+      `🛑 TRADE BLOCKED — Redis state failed to load. Bot will not trade until state is verified.\nCheck Upstash dashboard.`);
     return 0;
   }
 
+  const config = state.config;
+  if (!config.enabled) return 0;
+
   const enabledStrategies = state.strategies.filter(s => s.enabled).map(s => s.id);
-  if (enabledStrategies.length === 0) {
-    if (tgToken && tgChat) await sendTelegramAlert(tgToken, tgChat, `⚙️ DEBUG: No strategies enabled`);
-    return 0;
-  }
+  if (enabledStrategies.length === 0) return 0;
 
   const openPositions = state.positions.filter(p => p.status === 'open');
   let tradesPlaced = 0;
@@ -1481,14 +1539,6 @@ async function executeTrades(
   const regime = detectMarketRegime(btcSig);
   _currentRegime = regime; // tells evaluateStrategies which thresholds to use
   const btcStronglyBearish = regime === 'strong_bear' || regime === 'bear';
-
-  // Diagnostic: track safe signals that match ANY strategy (not just BUY action)
-  const buySignals = signals.filter(s => {
-    if (!SAFE_TRADING_COINS.has(s.symbol)) return false;
-    if (s.action === 'buy' || s.action === 'strong_buy') return true;
-    // Also include dip/oversold signals even if action=watch
-    return s.change24h <= -3 || s.rsi < 35;
-  });
 
   for (const sig of signals) {
     if (tradedThisRun.has(sig.symbol)) continue;
@@ -1563,7 +1613,7 @@ async function executeTrades(
     try {
       const result = await client.submitOrder({
         category: 'spot', symbol: `${sig.symbol}USDT`, side: 'Buy', orderType: 'Market',
-        qty: String(config.positionSizeUSD), marketUnit: 'quoteCoin',
+        qty: String(positionSizeUSD), marketUnit: 'quoteCoin', // Bug #7 fix: use AI-modified size if set
       });
 
       if (result.retCode !== 0) {
@@ -1577,8 +1627,10 @@ async function executeTrades(
       let fillQty = parseFloat(qtyStr);
       let fillPrice = sig.price;
       try {
+        // Bug #5 fix: market orders fill instantly and disappear from getActiveOrders.
+        // getHistoricOrders returns completed orders with real fill qty and avg price.
         await new Promise(r => setTimeout(r, 500));
-        const orderRes = await client.getActiveOrders({
+        const orderRes = await client.getHistoricOrders({
           category: 'spot', symbol: `${sig.symbol}USDT`, orderId: result.result?.orderId,
         });
         if (orderRes.retCode === 0 && orderRes.result?.list?.[0]) {
@@ -1592,12 +1644,18 @@ async function executeTrades(
       } catch {}
 
       const posId = `at_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-      const stopLoss = Math.round(fillPrice * (1 - config.stopLossPercent / 100) * 100) / 100;
-      const takeProfit = Math.round(fillPrice * (1 + config.takeProfitPercent / 100) * 100) / 100;
+      // ATR-based SL: use 2x ATR% if it's wider than the configured SL, capped at 2x configured SL.
+      // Prevents getting stopped out by normal volatility on high-ATR coins.
+      const atrSlPercent = sig.atrPercent > 0
+        ? Math.min(sig.atrPercent * 2, config.stopLossPercent * 2)
+        : config.stopLossPercent;
+      const finalSlPercent = Math.max(config.stopLossPercent, atrSlPercent);
+      const stopLoss = roundPrice(fillPrice * (1 - finalSlPercent / 100));
+      const takeProfit = roundPrice(fillPrice * (1 + config.takeProfitPercent / 100));
 
       const stratName = state.strategies.find(s => s.id === strategyId)?.name || strategyId;
 
-      const tp1Price = config.tp1Percent > 0 ? Math.round(fillPrice * (1 + config.tp1Percent / 100) * 100) / 100 : undefined;
+      const tp1Price = config.tp1Percent > 0 ? roundPrice(fillPrice * (1 + config.tp1Percent / 100)) : undefined;
 
       const position: Position = {
         id: posId, symbol: sig.symbol, entryPrice: fillPrice, qty: fillQty,
@@ -1610,6 +1668,28 @@ async function executeTrades(
       };
 
       state.positions.push(position);
+
+      // Bug #1 fix: Place server-side conditional SL on Bybit immediately after buy.
+      // This fires even if the cron is delayed, not relying on 5-min polling.
+      try {
+        const slResult = await client.submitOrder({
+          category: 'spot', symbol: `${sig.symbol}USDT`, side: 'Sell',
+          orderType: 'Market', qty: String(fillQty),
+          triggerPrice: String(stopLoss),
+          triggerDirection: 2, // 2 = triggers when price falls AT or BELOW triggerPrice
+          orderFilter: 'tpslOrder',
+        });
+        if (slResult.retCode === 0) {
+          position.slOrderId = slResult.result?.orderId;
+        } else {
+          console.error(`[SL-ORDER] Failed for ${sig.symbol}: ${slResult.retMsg}`);
+          if (tgToken && tgChat) await sendTelegramAlert(tgToken, tgChat,
+            `⚠️ SERVER SL FAILED | ${sig.symbol}\nFalling back to cron-only SL\nError: ${slResult.retMsg}`);
+        }
+      } catch (e: any) {
+        console.error(`[SL-ORDER] Exception for ${sig.symbol}:`, e.message);
+      }
+
       state.cooldowns[sig.symbol] = new Date().toISOString();
       tradedThisRun.add(sig.symbol);
       tradesPlaced++;
@@ -1650,22 +1730,6 @@ async function executeTrades(
     }
   }
 
-  // Diagnostic: if no trades placed, send debug info to Telegram
-  if (tradesPlaced === 0 && tgToken && tgChat && buySignals.length > 0) {
-    const btcInfo = btcSig ? `mom=${btcSig.momentum.toFixed(0)}, rsi=${btcSig.rsi.toFixed(0)}, ${btcSig.action}` : 'no BTC data';
-    const topBuys = buySignals.slice(0, 3).map(s =>
-      `${s.symbol}: ${s.action} str=${s.strength}% conf=${s.confidence}% rsi=${s.rsi.toFixed(0)} 24h=${s.change24h.toFixed(1)}%`
-    ).join('\n');
-    const reasons = skipReasons.slice(0, 5).join('\n');
-    await sendTelegramAlert(tgToken, tgChat,
-      `⚙️ TRADE DEBUG\n\n` +
-      `USDT: $${availableUSDT.toFixed(2)} | BTC: ${btcStronglyBearish ? '🔴 BEARISH' : '🟢 OK'} (${btcInfo})\n` +
-      `Strategies: ${enabledStrategies.length} | Open: ${openPositions.length}/${config.maxTotal}\n\n` +
-      `Top BUY signals:\n${topBuys || 'None'}\n\n` +
-      `Skip reasons:\n${reasons || 'None'}`
-    );
-  }
-
   return tradesPlaced;
 }
 
@@ -1682,14 +1746,39 @@ async function emergencyCloseAll(
       const currentPrice = tickerRes.retCode === 0 && tickerRes.result?.list?.[0]
         ? parseFloat((tickerRes.result.list[0] as any).lastPrice || '0') : pos.entryPrice;
 
+      // Cancel server-side SL order before selling to prevent double-sell
+      if (pos.slOrderId) {
+        try {
+          await client.cancelOrder({ category: 'spot', symbol: `${pos.symbol}USDT`, orderId: pos.slOrderId });
+        } catch {}
+      }
+
+      // Bug #2 fix: check actual wallet balance before selling
+      let emergencySellQty = pos.qty;
+      try {
+        const balRes = await client.getWalletBalance({ accountType: 'UNIFIED', coin: pos.symbol });
+        const coinBal = balRes.result?.list?.[0]?.coin?.find((c: any) => c.coin === pos.symbol);
+        const actualQty = parseFloat(coinBal?.availableToWithdraw || '0');
+        if (actualQty <= 0) {
+          errors.push(`${pos.symbol}: ghost position — coin not in wallet, purged`);
+          pos.status = 'closed_emergency';
+          pos.closePrice = currentPrice;
+          pos.closeTime = new Date().toISOString();
+          pos.pnl = 0; pos.pnlPercent = 0;
+          state.history.push(pos);
+          continue;
+        }
+        emergencySellQty = Math.min(pos.qty, actualQty);
+      } catch {}
+
       const sellResult = await client.submitOrder({
-        category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(pos.qty),
+        category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(emergencySellQty),
       });
 
       if (sellResult.retCode !== 0) {
         errors.push(`${pos.symbol}: ${sellResult.retMsg}`);
       } else {
-        const pnl = (currentPrice - pos.entryPrice) * pos.qty;
+        const pnl = (currentPrice - pos.entryPrice) * emergencySellQty;
         const pnlPercent = ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100;
 
         pos.status = 'closed_emergency';
@@ -1869,8 +1958,8 @@ async function executeDcaTrades(
         existingStack.totalQty = Math.round((existingStack.totalQty + fillQty) * 1e8) / 1e8;
         existingStack.totalInvested = Math.round((existingStack.totalInvested + fillPrice * fillQty) * 100) / 100;
         existingStack.avgEntryPrice = Math.round((existingStack.totalInvested / existingStack.totalQty) * 100) / 100;
-        existingStack.takeProfit = Math.round(existingStack.avgEntryPrice * (1 + config.dcaTakeProfitPercent / 100) * 100) / 100;
-        existingStack.stopLoss = Math.round(existingStack.avgEntryPrice * (1 - config.dcaStopLossPercent / 100) * 100) / 100;
+        existingStack.takeProfit = roundPrice(existingStack.avgEntryPrice * (1 + config.dcaTakeProfitPercent / 100));
+        existingStack.stopLoss = roundPrice(existingStack.avgEntryPrice * (1 - config.dcaStopLossPercent / 100));
         tradesPlaced++;
 
         const msg = `📉 DCA ADD #${existingStack.entries.length} | ${sig.symbol}\n` +
@@ -2228,8 +2317,28 @@ export default async function handler(req: any, res: any) {
       const tgToken = process.env.TELEGRAM_BOT_TOKEN || '';
       const tgChat = process.env.TELEGRAM_CHAT_ID || '';
       const result = await emergencyCloseAll(state, client, tgToken, tgChat);
-      await saveState(state);
+      await saveState(state, tgToken, tgChat);
       return res.status(200).json({ success: true, ...result });
+    }
+
+    // Force-clears ghost positions from state without placing sell orders (use when coins aren't in wallet)
+    if (action === 'purgePositions' && req.method === 'POST') {
+      const state = await loadState();
+      const open = state.positions.filter(p => p.status === 'open');
+      const now = new Date().toISOString();
+      for (const pos of open) {
+        pos.status = 'closed_manual' as any;
+        pos.closePrice = pos.entryPrice;
+        pos.closeTime = now;
+        pos.pnl = 0;
+        pos.pnlPercent = 0;
+        state.history.push(pos);
+      }
+      state.positions = state.positions.filter(p => p.status === 'open');
+      state.dcaStacks = (state.dcaStacks || []).map(s => ({ ...s, status: 'closed' as any }));
+      state.config.enabled = false;
+      await saveState(state);
+      return res.status(200).json({ success: true, purged: open.length, message: `Cleared ${open.length} ghost positions. Bot disabled.` });
     }
 
     if (action === 'cleanup' && req.method === 'POST') {
@@ -2447,6 +2556,249 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ success: true, debug });
     }
 
+    // === COIN INSIGHT ===
+    if (action === 'coinInsight') {
+      const rawSym = ((req.query?.symbol as string) || '').toUpperCase().replace(/USDT$/i, '').trim();
+      if (!rawSym) return res.status(400).json({ error: 'symbol required — e.g. ?action=coinInsight&symbol=BTC' });
+
+      // Fetch 4 timeframes + Fear & Greed concurrently
+      const [tf15m, tf1h, tf4h, tf1d, fgRes] = await Promise.all([
+        fetchKlines(rawSym, '15', 96),
+        fetchKlines(rawSym, '1h', 48),
+        fetchKlines(rawSym, '4h', 200),
+        fetchKlines(rawSym, '1d', 30),
+        fetch('https://api.alternative.me/fng/?limit=1').then(r => r.json()).catch(() => ({ data: [{ value: '50', value_classification: 'Neutral' }] })),
+      ]) as [Candle[], Candle[], Candle[], Candle[], any];
+
+      if (tf4h.length < 50) return res.status(404).json({ error: `No market data for ${rawSym}. Check the symbol.` });
+
+      const price   = tf4h[tf4h.length - 1].close;
+      const prev24h = tf4h.length >= 7 ? tf4h[tf4h.length - 7].close : tf4h[0].close;
+      const ch24h   = ((price - prev24h) / prev24h) * 100;
+      const prev7d  = tf1d.length >= 8 ? tf1d[tf1d.length - 8].close : (tf1d[0]?.close || price);
+      const ch7d    = tf1d.length > 0 ? ((price - prev7d) / prev7d) * 100 : 0;
+      const fearGreed = { value: parseInt(fgRes?.data?.[0]?.value || '50'), label: fgRes?.data?.[0]?.value_classification || 'Neutral' };
+
+      // ── 15m ──
+      const c15   = tf15m.map(c => c.close);
+      const rsi15 = computeRSI(c15);
+      const st15  = computeSupertrend(tf15m);
+      const mac15 = macd(c15);
+
+      // ── 1h ──
+      const c1h   = tf1h.map(c => c.close);
+      const rsi1h = computeRSI(c1h);
+      const st1h  = computeSupertrend(tf1h);
+      const mac1h = macd(c1h);
+
+      // ── 4h ──
+      const c4h    = tf4h.map(c => c.close);
+      const rsi4h  = computeRSI(c4h);
+      const st4h   = computeSupertrend(tf4h);
+      const mac4h  = macd(c4h);
+      const bb4h   = bollingerBands(c4h);
+      const e9_ci  = ema(c4h, 9).slice(-1)[0];
+      const e21_ci = ema(c4h, 21).slice(-1)[0];
+      const e50_ci = ema(c4h, 50).slice(-1)[0];
+      const atr4h  = computeATR(tf4h);
+      const atrPct = (atr4h / price) * 100;
+      const vols4h = tf4h.map(c => c.volume);
+      const volAvg = vols4h.slice(-43, -1).reduce((a: number, b: number) => a + b, 0) / 42;
+      const volX   = volAvg > 0 ? vols4h[vols4h.length - 1] / volAvg : 1;
+
+      // StochRSI on 4h
+      const rsiSeries4h: number[] = [];
+      for (let i = 14; i <= c4h.length; i++) rsiSeries4h.push(computeRSI(c4h.slice(0, i)));
+      let stoch4h = 50;
+      if (rsiSeries4h.length >= 14) {
+        const rec = rsiSeries4h.slice(-14), mn = Math.min(...rec), mx = Math.max(...rec);
+        if (mx !== mn) stoch4h = Math.round(((rsiSeries4h[rsiSeries4h.length - 1] - mn) / (mx - mn)) * 100);
+      }
+      const bbPos = price < bb4h.lower * 1.005 ? 'oversold' : price > bb4h.upper * 0.995 ? 'overbought' : 'neutral';
+
+      // ── 1D ──
+      const c1d    = tf1d.map(c => c.close);
+      const rsi1d  = computeRSI(c1d);
+      const e7d    = ema(c1d, 7).slice(-1)[0];
+      const e21d   = ema(c1d, Math.min(21, c1d.length)).slice(-1)[0];
+      const dayTrend = e7d > e21d * 1.005 ? 'up' : e7d < e21d * 0.995 ? 'down' : 'sideways';
+      const sup30  = Math.min(...tf1d.map(c => c.low));
+      const res30  = Math.max(...tf1d.map(c => c.high));
+
+      // Bullish alignment score
+      let bullScore = 0;
+      if (st15.bullish)                  bullScore++;
+      if (st1h.bullish)                  bullScore++;
+      if (st4h.bullish)                  bullScore++;
+      if (dayTrend === 'up')             bullScore++;
+      if (rsi15 > 50 && rsi15 < 75)     bullScore++;
+      if (rsi1h > 50 && rsi1h < 75)     bullScore++;
+      if (rsi4h > 50 && rsi4h < 72)     bullScore++;
+      if (rsi1d > 50 && rsi1d < 70)     bullScore++;
+      if (mac4h.hist > 0)                bullScore++;
+      if (e9_ci > e21_ci)                bullScore++;
+
+      // ── CoinGecko: ATH/ATL + year-by-year history (concurrent, graceful fail) ──
+      const CG_IDS: Record<string, string> = {
+        BTC:'bitcoin', ETH:'ethereum', SOL:'solana', BNB:'binancecoin', XRP:'ripple',
+        ADA:'cardano', AVAX:'avalanche-2', DOT:'polkadot', LINK:'chainlink', ATOM:'cosmos',
+        LTC:'litecoin', NEAR:'near', ARB:'arbitrum', OP:'optimism', INJ:'injective-protocol',
+        SUI:'sui', AAVE:'aave', MKR:'maker', TRX:'tron', XLM:'stellar', JUP:'jupiter',
+        MATIC:'matic-network', UNI:'uniswap', DOGE:'dogecoin', SHIB:'shiba-inu',
+        TON:'the-open-network', HBAR:'hedera-hashgraph', ICP:'internet-computer',
+        APT:'aptos', SEI:'sei-network', WIF:'dogwifcoin', BONK:'bonk',
+        PEPE:'pepe', FTM:'fantom', CRV:'curve-dao-token', LDO:'lido-dao',
+        HYPE:'hyperliquid',
+      };
+      const cgId = CG_IDS[rawSym] || rawSym.toLowerCase();
+      const cgBase = 'https://api.coingecko.com/api/v3';
+
+      const [cgMarket, cgChart] = await Promise.all([
+        fetch(`${cgBase}/coins/${cgId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`)
+          .then(r => r.ok ? r.json() as Promise<any> : null).catch(() => null),
+        fetch(`${cgBase}/coins/${cgId}/market_chart?vs_currency=usd&days=max&interval=daily`)
+          .then(r => r.ok ? r.json() as Promise<any> : null).catch(() => null),
+      ]) as [any, any];
+
+      let historical: any = null;
+      if (cgMarket?.market_data) {
+        const md = cgMarket.market_data;
+        const ath = md.ath?.usd || 0;
+        const atl = md.atl?.usd || 0;
+        const athDate = md.ath_date?.usd ? md.ath_date.usd.split('T')[0] : null;
+        const atlDate = md.atl_date?.usd ? md.atl_date.usd.split('T')[0] : null;
+        const fromAthPct = md.ath_change_percentage?.usd || 0;
+        const toAthPct  = ath > price ? Math.round(((ath - price) / price) * 10000) / 100 : 0;
+
+        // Year-by-year: last price of each calendar year
+        const yearMap: Record<string, number> = {};
+        if (cgChart?.prices?.length) {
+          for (const [ts, p] of cgChart.prices) {
+            const yr = new Date(ts).getFullYear().toString();
+            yearMap[yr] = p; // keeps overwriting → last price of year
+          }
+          // Current year → use live price
+          yearMap[new Date().getFullYear().toString()] = price;
+        }
+        const yearlyPrices = Object.entries(yearMap)
+          .sort(([a], [b]) => parseInt(a) - parseInt(b))
+          .map(([year, p]) => ({ year, price: Math.round(p * 1000) / 1000 }));
+
+        // Launch info
+        const launchTs   = cgChart?.prices?.[0]?.[0];
+        const launchP    = cgChart?.prices?.[0]?.[1];
+        const launchDate = launchTs ? new Date(launchTs).toISOString().split('T')[0] : null;
+        const allTimeReturn = launchP && launchP > 0 ? Math.round(((price - launchP) / launchP) * 100) : null;
+
+        // Fibonacci recovery targets (from current price up toward ATH)
+        const range = ath - price;
+        const fib236 = range > 0 ? Math.round((price + range * 0.236) * 10000) / 10000 : null;
+        const fib382 = range > 0 ? Math.round((price + range * 0.382) * 10000) / 10000 : null;
+        const fib618 = range > 0 ? Math.round((price + range * 0.618) * 10000) / 10000 : null;
+
+        historical = {
+          ath:  Math.round(ath * 10000) / 10000,
+          atl:  Math.round(atl * 10000) / 10000,
+          athDate, atlDate,
+          fromAthPct: Math.round(fromAthPct * 100) / 100,
+          toAthPct,
+          yearlyPrices,
+          launchDate, launchPrice: launchP ? Math.round(launchP * 10000000) / 10000000 : null,
+          allTimeReturn,
+          fibTargets: { fib236, fib382, fib618, ath: Math.round(ath * 10000) / 10000 },
+          marketCap: md.market_cap?.usd || null,
+          rank: cgMarket.market_cap_rank || null,
+        };
+      }
+
+      // Check if user holds this coin
+      let position: { entryPrice: number; qty: number; pnlPct: number } | null = null;
+      try {
+        const st = await loadState();
+        const pos = st.positions.find(p => p.symbol === rawSym && p.status === 'open');
+        if (pos) position = { entryPrice: pos.entryPrice, qty: pos.qty, pnlPct: ((price - pos.entryPrice) / pos.entryPrice) * 100 };
+      } catch {}
+
+      // AI Analysis via Claude Haiku
+      const posCtx = position
+        ? `\nYOU HOLD ${rawSym}: Entry $${position.entryPrice.toFixed(4)} | Unrealized P&L: ${position.pnlPct.toFixed(2)}%`
+        : '\nNo existing position.';
+
+      const insightPrompt = `You are a professional crypto trader. Analyze ${rawSym}/USDT for a spot trade decision.
+
+MARKET DATA: Price $${price.toFixed(6)} | 24h: ${ch24h.toFixed(1)}% | 7d: ${ch7d.toFixed(1)}%
+
+MULTI-TIMEFRAME:
+15m: RSI ${rsi15} | MACD ${mac15.hist > 0 ? 'Bullish' : 'Bearish'} | ST ${st15.bullish ? 'BULL' : 'BEAR'}${st15.flipped ? ' ⚡FLIP' : ''}
+1h:  RSI ${rsi1h} | MACD ${mac1h.hist > 0 ? 'Bullish' : 'Bearish'} | ST ${st1h.bullish ? 'BULL' : 'BEAR'}${st1h.flipped ? ' ⚡FLIP' : ''}
+4h:  RSI ${rsi4h} | StochRSI ${stoch4h} | MACD ${mac4h.hist > 0 ? 'Bullish' : 'Bearish'} | ST ${st4h.bullish ? 'BULL' : 'BEAR'}${st4h.flipped ? ' ⚡FLIP' : ''} | Vol ${volX.toFixed(1)}x | BB ${bbPos}
+1D:  RSI ${rsi1d} | Trend ${dayTrend.toUpperCase()} | EMA7 ${e7d > e21d ? 'above' : 'below'} EMA21
+
+LEVELS: Support $${sup30.toFixed(4)} | Resistance $${res30.toFixed(4)} | EMA9 $${e9_ci.toFixed(4)} | EMA21 $${e21_ci.toFixed(4)} | EMA50 $${e50_ci.toFixed(4)}
+ATR: ${atrPct.toFixed(2)}% | Bullish alignment: ${bullScore}/10 | Fear & Greed: ${fearGreed.value}/100 (${fearGreed.label})
+${posCtx}
+
+Respond ONLY with this exact JSON (no extra text):
+{"verdict":"STRONG BUY|BUY|WAIT|SELL|STRONG SELL","confidence":<40-95>,"bias":"<6 words max: 1-3 day outlook>","upside":<% target>,"downside":<% risk>,"summary":"<2 direct sentences: what the setup says + exact action>","positionAdvice":"${position ? '1 clear sentence on the existing position' : ''}"}`;
+
+      let verdict = 'WAIT', confidence = 50, bias = 'Mixed signals', upside = 5, downside = 3;
+      let summary = 'AI analysis unavailable.', positionAdvice = '';
+      try {
+        const aiKey = process.env.ANTHROPIC_API_KEY;
+        if (aiKey) {
+          const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': aiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+            body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 500, messages: [{ role: 'user', content: insightPrompt }] }),
+          });
+          if (aiRes.ok) {
+            const aiData = await aiRes.json() as any;
+            const aiText = aiData.content?.[0]?.text || '{}';
+            const m = aiText.match(/\{[\s\S]*\}/);
+            if (m) {
+              const p = JSON.parse(m[0]);
+              verdict        = p.verdict        || 'WAIT';
+              confidence     = Math.min(95, Math.max(40, parseInt(p.confidence) || 50));
+              bias           = p.bias           || 'Mixed signals';
+              upside         = parseFloat(p.upside)   || 5;
+              downside       = parseFloat(p.downside) || 3;
+              summary        = p.summary        || '';
+              positionAdvice = p.positionAdvice || '';
+            }
+          }
+        }
+      } catch {}
+
+      return res.status(200).json({
+        symbol: rawSym, price,
+        change24h: Math.round(ch24h * 100) / 100,
+        change7d:  Math.round(ch7d  * 100) / 100,
+        verdict, confidence, bias,
+        upside:   Math.round(upside   * 10) / 10,
+        downside: Math.round(downside * 10) / 10,
+        summary, positionAdvice,
+        timeframes: {
+          tf15m: { rsi: rsi15, macd: mac15.hist > 0, supertrend: st15.bullish, flipped: st15.flipped },
+          tf1h:  { rsi: rsi1h, macd: mac1h.hist > 0, supertrend: st1h.bullish, flipped: st1h.flipped },
+          tf4h:  { rsi: rsi4h, stochRsi: stoch4h, macd: mac4h.hist > 0, supertrend: st4h.bullish, flipped: st4h.flipped, volume: Math.round(volX * 10) / 10, bbPosition: bbPos },
+          tf1d:  { rsi: rsi1d, trend: dayTrend, emaAlignment: e7d > e21d },
+        },
+        levels: {
+          support:    Math.round(sup30    * 10000) / 10000,
+          resistance: Math.round(res30    * 10000) / 10000,
+          ema9:       Math.round(e9_ci    * 10000) / 10000,
+          ema21:      Math.round(e21_ci   * 10000) / 10000,
+          ema50:      Math.round(e50_ci   * 10000) / 10000,
+          bbLower:    Math.round(bb4h.lower * 10000) / 10000,
+          bbUpper:    Math.round(bb4h.upper * 10000) / 10000,
+          atrPercent: Math.round(atrPct * 100) / 100,
+        },
+        bullishScore: bullScore,
+        fearGreed, position, historical,
+        timestamp: Date.now(),
+      });
+    }
+
     // === SCANNER MODE (default) ===
     const isAlertMode = req.query?.alert === '1';
     if (isAlertMode) {
@@ -2502,14 +2854,10 @@ export default async function handler(req: any, res: any) {
         if (state.config.enabled) {
           tradesPlaced = await executeTrades(allSignals, state, client, tgToken, tgChat);
           tradesPlaced += await executeDcaTrades(allSignals, state, client, tgToken, tgChat);
-        } else {
-          await sendTelegramAlert(tgToken, tgChat, `⚙️ DEBUG: Bot disabled in Redis state — config.enabled=false. Toggle ON from dashboard and Save.`);
         }
-      } else {
-        await sendTelegramAlert(tgToken, tgChat, `⚙️ DEBUG: Bybit client NULL — check BYBIT_API_KEY and BYBIT_API_SECRET env vars`);
       }
       // Always save state so alertTimes persists — prevents duplicate Telegram alerts
-      await saveState(state);
+      await saveState(state, tgToken, tgChat);
 
       // Activity log — fire-and-forget (non-blocking, after critical work is done)
       try {
@@ -2525,7 +2873,7 @@ export default async function handler(req: any, res: any) {
       // Periodic self-diagnostic summary (every 6h) — no manual checking needed
       const hour = new Date().getUTCHours();
       const minute = new Date().getUTCMinutes();
-      if (tgToken && tgChat && minute < 10 && (hour === 0 || hour === 6 || hour === 12 || hour === 18)) {
+      if (tgToken && tgChat && minute < 10 && hour === 9) { // once a day at 9:00 UTC
         const openPos = state.positions.filter(p => p.status === 'open');
         const openDca = state.dcaStacks.filter(s => s.status === 'open');
         const currentRegime = detectMarketRegime(allSignals.find(s => s.symbol === 'BTC'));
@@ -2571,7 +2919,7 @@ export default async function handler(req: any, res: any) {
         buys: allSignals.filter(s => s.action === 'buy').length,
         sells: allSignals.filter(s => s.action === 'sell' || s.action === 'strong_sell').length,
       },
-      signals: allSignals,
+      topSignals: allSignals.filter(s => s.action === 'buy' || s.action === 'strong_buy').slice(0, 5).map((s: SmartSignal) => ({ symbol: s.symbol, action: s.action, strength: s.strength })),
     });
   } catch (err: any) {
     console.error('Smart Scanner error:', err.message);

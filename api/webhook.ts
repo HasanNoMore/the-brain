@@ -142,13 +142,28 @@ export default async function handler(req: any, res: any) {
 
   // ── Route: TradingView webhook ────────────────────────────────────────────────
   try {
+    // Webhook Bug #1 fix: validate secret token so nobody can spoof trades via this URL
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const provided = (req.query?.secret as string) || payload?.secret;
+      if (provided !== webhookSecret) {
+        console.warn('[WEBHOOK] Rejected — invalid or missing secret');
+        return res.status(401).json({ error: 'Unauthorized: invalid webhook secret' });
+      }
+    }
+
     const { action, symbol, qty, signal, price } = payload || {};
     if (!action || !symbol) {
       return res.status(400).json({ error: 'Missing action or symbol in webhook payload' });
     }
 
     const side        = action.toLowerCase() === 'buy' ? 'Buy' : 'Sell';
-    const cleanSymbol = symbol.replace('BYBIT:', '').replace('BINANCE:', '').toUpperCase();
+    // Pine Bug #1 fix: handle BYBIT:BTCUSDT, BINANCE:BTCUSDT, BTCUSDT.P, BTC/USDT formats
+    const cleanSymbol = symbol
+      .replace(/^(BYBIT|BINANCE|OKX|COINBASE):/i, '')
+      .replace(/\.[A-Z]+$/, '')   // strip .P, .PERP etc
+      .replace('/', '')
+      .toUpperCase();
     const finalSymbol = cleanSymbol.endsWith('USDT') ? cleanSymbol : cleanSymbol + 'USDT';
     const tradeQty    = qty === 'all' ? '0' : (qty || '10');
     const apiKey      = process.env.BYBIT_API_KEY;
@@ -184,8 +199,10 @@ export default async function handler(req: any, res: any) {
         const baseCoin   = finalSymbol.replace('USDT', '');
         const balanceRes = await client.getWalletBalance({ accountType: 'UNIFIED', coin: baseCoin });
         const coinBal    = balanceRes.result?.list?.[0]?.coin?.find((c: any) => c.coin === baseCoin);
-        const raw        = parseFloat(coinBal?.walletBalance || '0');
-        sellQty = String(Math.floor(raw * 100) / 100);
+        const raw = parseFloat(coinBal?.walletBalance || '0');
+        // Webhook Bug #2 fix: dynamic precision — Math.floor(x * 100)/100 rounds BTC 0.00012 to 0.00
+        const decimals = raw >= 1000 ? 2 : raw >= 1 ? 4 : raw >= 0.01 ? 6 : 8;
+        sellQty = String(Math.floor(raw * Math.pow(10, decimals)) / Math.pow(10, decimals));
         if (raw <= 0) {
           await logTrade({ source: 'webhook', symbol: finalSymbol, side, qty: '0', signal: signal || 'unknown', orderType: 'Market', result: 'failed', retMsg: `No ${baseCoin} balance to sell` });
           return res.status(200).json({ success: true, message: `No ${baseCoin} balance to sell`, signal });
