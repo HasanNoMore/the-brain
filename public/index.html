@@ -8,40 +8,40 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Zalando+Sans+Expanded:ital,wght@0,200..900;1,200..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         *,*::before,*::after{box-sizing:border-box}
 
         /* ===== DESIGN TOKENS ===== */
         :root,[data-theme="dark"]{
-            /* Backgrounds */
-            --bg:#1f1f1f;--bg2:#292929;
+            /* Backgrounds — deeper with purple undertone */
+            --bg:#141218;--bg2:#1d1b25;
             /* Cards */
-            --card:rgba(41,41,41,0.97);--card-h:rgba(55,55,55,0.99);
-            /* Primary — lime yellow-green */
-            --pri:#d9fe7d;--pri-l:#e8ff9f;--pri-d:rgba(217,254,125,0.12);--pri-g:rgba(217,254,125,0.24);
-            /* Secondary — purple/violet */
-            --acc:#9481ff;--acc-d:rgba(148,129,255,0.13);--acc-g:rgba(148,129,255,0.26);--acc-b:rgba(148,129,255,0.06);
+            --card:#1d1b25;--card-h:#222030;
+            /* Primary — lime */
+            --pri:#daff7b;--pri-l:#d4f57a;--pri-d:rgba(218,255,123,0.08);--pri-g:rgba(218,255,123,0.16);
+            /* Secondary — purple */
+            --acc:#9481ff;--acc-d:rgba(148,129,255,0.08);--acc-g:rgba(148,129,255,0.16);--acc-b:rgba(148,129,255,0.06);
             /* Blues */
             --blue:#2d4aca;--blue-d:#2441c1;--blue-l:rgba(45,74,202,0.18);
-            /* Status */
-            --ok:#86efac;--ok-d:rgba(134,239,172,0.12);
-            --err:#fca5a5;--err-d:rgba(252,165,165,0.12);
-            --warn:#fcd34d;--warn-d:rgba(252,211,77,0.12);
-            /* Text */
-            --t1:#FFFFFF;--t2:#e5e5e7;--t3:#a9a9a9;--t4:#686868;
-            /* Borders */
-            --brd:rgba(255,255,255,0.08);--brd-h:rgba(255,255,255,0.15);
-            --brd-a:rgba(217,254,125,0.35);--brd-s:rgba(148,129,255,0.38);
+            /* Status — softer, less harsh */
+            --ok:#5eead4;--ok-d:rgba(94,234,212,0.10);
+            --err:#f87171;--err-d:rgba(248,113,113,0.10);
+            --warn:#fbbf24;--warn-d:rgba(251,191,36,0.10);
+            /* Text — ALL BRIGHTER for readability */
+            --t1:#f2f2f6;--t2:#c5c5d0;--t3:#8a8a98;--t4:#5a5a68;
+            /* Borders — visible but soft */
+            --brd:rgba(255,255,255,0.07);--brd-h:rgba(255,255,255,0.14);
+            --brd-a:rgba(218,255,123,0.25);--brd-s:rgba(148,129,255,0.25);
             /* Overlays & inputs */
             --ov:rgba(0,0,0,0.84);--inp:rgba(255,255,255,0.05);--inp-f:rgba(255,255,255,0.09);
-            --hov:rgba(255,255,255,0.04);--hov-s:rgba(255,255,255,0.02);--hov-i:rgba(255,255,255,0.05);
+            --hov:rgba(255,255,255,0.05);--hov-s:rgba(255,255,255,0.03);--hov-i:rgba(255,255,255,0.06);
             --sb:rgba(255,255,255,0.1);--sb-h:rgba(255,255,255,0.18);
             --sh:rgba(0,0,0,0.7);--fab:rgba(148,129,255,0.32);
-            /* Emboss shadows */
-            --emboss:2px 2px 4px rgba(0,0,0,0.50),5px 5px 14px rgba(0,0,0,0.28),-1px -1px 3px rgba(255,255,255,0.04),inset 0 1px 0 rgba(255,255,255,0.06);
-            --emboss-sm:1px 1px 3px rgba(0,0,0,0.40),3px 3px 8px rgba(0,0,0,0.22),-1px -1px 2px rgba(255,255,255,0.03),inset 0 1px 0 rgba(255,255,255,0.05);
-            --inset:inset 2px 2px 5px rgba(0,0,0,0.48),inset 4px 4px 12px rgba(0,0,0,0.18),inset -1px -1px 2px rgba(255,255,255,0.03);
+            /* Shadows — softer, no heavy emboss */
+            --emboss:0 2px 8px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.04);
+            --emboss-sm:0 1px 4px rgba(0,0,0,0.12),inset 0 1px 0 rgba(255,255,255,0.03);
+            --inset:inset 1px 1px 3px rgba(0,0,0,0.3),inset -1px -1px 2px rgba(255,255,255,0.02);
         }
         [data-theme="light"]{
             --bg:#f5f5f2;--bg2:#ffffff;--card:rgba(255,255,255,0.85);--card-h:#f8f8f7;
@@ -58,8 +58,8 @@
 
         /* ===== TYPOGRAPHY ===== */
         :root{
-            --font-heading:'Zalando Sans Expanded',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-            --font-body:'Zalando Sans Expanded',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            --font-heading:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            --font-body:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
         }
         body{font-family:var(--font-body);background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased;margin:0;font-size:16px}
         input,select,textarea{font-family:var(--font-body)}
@@ -68,29 +68,26 @@
         .stat-big,.stat-value,.gradient-text,.portfolio-value{font-family:var(--font-heading)}
         .nav-tab,.tab-btn,.btn-primary,.btn-ghost,.section-label,.form-label,.signal-badge{font-family:var(--font-body)}
 
-        /* ===== CARDS — Solid + Emboss ===== */
+        /* ===== CARDS — Border style (V4.1) ===== */
         .card{
             background:var(--card);
-            border:1px solid var(--brd);border-radius:24px;
-            /* Specific props only — far faster than transition:all */
-            transition:transform .22s cubic-bezier(.16,1,.3,1),box-shadow .22s cubic-bezier(.16,1,.3,1),border-color .22s,background-color .22s;
-            box-shadow:var(--emboss);
-            will-change:transform;
+            border:1.5px solid rgba(255,255,255,0.09);border-radius:20px;
+            transition:transform .25s ease,border-color .25s ease,background-color .25s ease;
+            box-shadow:0 2px 8px rgba(0,0,0,0.15);
         }
         .card:hover{
-            background:rgba(50,44,72,0.72);
-            border-color:rgba(148,129,255,0.3);
-            box-shadow:0 8px 32px rgba(0,0,0,0.72),0 0 0 1px rgba(148,129,255,0.2),0 0 20px rgba(148,129,255,0.08);
-            transform:translateY(-2px);
+            border-color:rgba(255,255,255,0.14);
+            background:var(--card-h);
+            transform:translateY(-1px);
         }
-        [data-theme="light"] .card{box-shadow:4px 4px 16px rgba(0,0,0,.12),-1px -1px 4px rgba(255,255,255,.8);border-color:rgba(0,0,0,.08);background:rgba(255,255,255,0.92)}
-        [data-theme="light"] .card:hover{box-shadow:6px 6px 24px rgba(0,0,0,.16);border-color:rgba(148,129,255,.35);transform:translateY(-2px)}
+        [data-theme="light"] .card{box-shadow:0 2px 12px rgba(0,0,0,.08);border-color:rgba(0,0,0,.08);background:rgba(255,255,255,0.92)}
+        [data-theme="light"] .card:hover{box-shadow:0 4px 20px rgba(0,0,0,.12);border-color:rgba(148,129,255,.35);transform:translateY(-1px)}
         .portfolio-coin-card{border-top:2px solid var(--acc)!important}
         .portfolio-coin-card h3{color:var(--acc)}
 
-        /* ===== PORTFOLIO HERO ===== */
-        .portfolio-value{font-size:56px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:var(--t1);text-shadow:0 0 40px rgba(148,129,255,0.2),0 0 80px rgba(217,254,125,0.1)}
-        [data-theme="light"] .portfolio-value{text-shadow:none}
+        /* ===== PORTFOLIO HERO — V4.1 ===== */
+        .portfolio-value{font-size:40px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:var(--t1);font-family:var(--font-heading)}
+        [data-theme="light"] .portfolio-value{}
 
         /* ===== LIVE DOT ===== */
         .live-dot{width:8px;height:8px;background:var(--pri);border-radius:50%;animation:pulse 2s ease-in-out infinite}
@@ -129,49 +126,51 @@
         @keyframes toastIn{from{opacity:0;transform:translateX(20px) scale(.96)}to{opacity:1;transform:translateX(0) scale(1)}}
         @keyframes toastOut{to{opacity:0;transform:translateX(20px) scale(.96)}}
 
-        /* ===== BUTTONS — Emboss raised ===== */
+        /* ===== BUTTONS — V4.1 clean hover ===== */
         .btn-loading{opacity:.6;pointer-events:none}
-        .btn-primary{background:var(--pri);border:none;color:#000;font-weight:700;font-size:15px;transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .18s,background-color .15s;border-radius:12px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.45),0 0 18px rgba(217,254,125,0.28),inset 0 1px 0 rgba(255,255,255,0.4);will-change:transform}
-        .btn-primary:hover{background:var(--pri-l);box-shadow:0 6px 24px rgba(0,0,0,0.5),0 0 28px rgba(217,254,125,0.38),inset 0 1px 0 rgba(255,255,255,0.45);transform:translateY(-2px)}
-        .btn-primary:active{box-shadow:inset 2px 2px 6px rgba(0,0,0,0.3);transform:translateY(0)}
-        [data-theme="light"] .btn-primary{box-shadow:4px 4px 12px rgba(0,0,0,.2),-1px -1px 3px rgba(255,255,255,.9),0 0 16px rgba(106,170,0,.2)}
-        .btn-ghost{border:1px solid var(--brd);color:var(--t2);transition:transform .18s,box-shadow .18s,background-color .15s,border-color .15s,color .15s;background:rgba(41,41,41,0.8);border-radius:12px;cursor:pointer;font-size:14px;box-shadow:var(--emboss-sm)}
-        .btn-ghost:hover{border-color:rgba(148,129,255,0.5);color:var(--t1);background:rgba(148,129,255,0.12);box-shadow:0 4px 14px rgba(0,0,0,0.5),0 0 10px rgba(148,129,255,0.18);transform:translateY(-1px)}
-        .btn-ghost:active{box-shadow:var(--inset);transform:translateY(0)}
-        [data-theme="light"] .btn-ghost{background:#f5f5f5;border-color:rgba(0,0,0,.12);color:var(--t2);box-shadow:3px 3px 8px rgba(0,0,0,.1),-1px -1px 3px rgba(255,255,255,.9)}
+        .btn-primary{background:var(--pri);border:1.5px solid transparent;color:#111018;font-weight:700;font-size:14px;font-family:var(--font-body);transition:all .2s ease;border-radius:14px;cursor:pointer;box-shadow:0 2px 10px rgba(218,255,123,0.16)}
+        .btn-primary:hover{background:#d4f57a;box-shadow:0 6px 20px rgba(218,255,123,0.22);transform:translateY(-1px)}
+        .btn-primary:active{transform:translateY(0)}
+        [data-theme="light"] .btn-primary{box-shadow:0 2px 8px rgba(106,170,0,.2)}
+        .btn-ghost{border:1.5px solid rgba(255,255,255,0.09);color:var(--t1);font-weight:600;font-size:13px;font-family:var(--font-body);transition:all .2s ease;background:rgba(255,255,255,0.04);border-radius:14px;cursor:pointer}
+        .btn-ghost:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.14);transform:translateY(-1px)}
+        .btn-ghost:active{transform:translateY(0)}
+        [data-theme="light"] .btn-ghost{background:#f5f5f5;border-color:rgba(0,0,0,.12);color:var(--t2)}
         [data-theme="light"] .btn-ghost:hover{background:#efefef;border-color:rgba(148,129,255,.4);color:var(--t1)}
+        .btn-danger{background:transparent;color:var(--err);font-weight:700;font-size:14px;font-family:var(--font-body);padding:12px 24px;border-radius:14px;border:1.5px solid rgba(248,113,113,0.3);cursor:pointer;transition:all .2s ease}
+        .btn-danger:hover{background:rgba(248,113,113,0.10);border-color:rgba(248,113,113,0.5)}
 
         /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--sb);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--sb-h)}
         ::selection{background:rgba(218,255,123,.25)}
 
-        /* ===== TAB BUTTONS ===== */
-        .tab-btn{padding:9px 20px;font-size:14px;font-weight:500;color:var(--t3);border-radius:100px;transition:all .2s;cursor:pointer;border:none;background:transparent}
-        .tab-btn:hover{color:var(--acc);background:var(--acc-d)}.tab-btn.active{color:#000;background:var(--pri);font-weight:700;box-shadow:0 2px 14px var(--pri-g)}
+        /* ===== TAB BUTTONS — V4.1 ===== */
+        .tab-btn{padding:8px 18px;font-size:13px;font-weight:500;font-family:var(--font-body);color:var(--t3);border-radius:100px;transition:all .25s ease;cursor:pointer;border:1.5px solid rgba(255,255,255,0.07);background:transparent}
+        .tab-btn:hover{color:var(--t2);border-color:rgba(255,255,255,0.12)}.tab-btn.active{color:#111018;background:var(--pri);border-color:transparent;font-weight:700;box-shadow:0 2px 10px rgba(218,255,123,0.16)}
         .chat-chip{padding:9px 18px;font-size:14px;font-weight:500;color:var(--t3);border:1px solid var(--brd);border-radius:100px;cursor:pointer;transition:all .2s;white-space:nowrap;background:transparent}
         .chat-chip:hover{color:#fff;border-color:var(--acc);background:rgba(148,129,255,0.2)}
         .pine-editor{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;resize:vertical;min-height:200px;tab-size:4;color:var(--pri-l);border-radius:12px}
         .equity-canvas{width:100%;height:160px;border-radius:16px;background:var(--hov-s);border:1px solid var(--brd)}
 
-        /* ===== STAT ITEMS — emboss ===== */
-        .stat-item{padding:20px;border-radius:20px;background:#252525;border:1px solid rgba(255,255,255,0.07);box-shadow:var(--emboss)}
-        .stat-label{font-size:13px;color:var(--t3);font-weight:600;letter-spacing:.07em;text-transform:uppercase}
-        .stat-value{font-size:27px;font-weight:800;margin-top:6px;letter-spacing:-0.02em}
-        .stat-big{font-size:3rem;font-weight:800;line-height:1;letter-spacing:-0.03em}
-        [data-theme="light"] .stat-item{background:#f8f8f8;border-color:rgba(0,0,0,.09);box-shadow:3px 3px 10px rgba(0,0,0,.1),-1px -1px 3px rgba(255,255,255,.9)}
+        /* ===== STAT ITEMS — V4.1 border style ===== */
+        .stat-item{padding:20px;border-radius:20px;background:var(--card);border:1.5px solid rgba(255,255,255,0.09);box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+        .stat-label{font-size:11px;color:var(--t3);font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+        .stat-value{font-size:24px;font-weight:800;margin-top:6px;letter-spacing:-0.02em;font-family:var(--font-heading)}
+        .stat-big{font-size:3rem;font-weight:800;line-height:1;letter-spacing:-0.03em;font-family:var(--font-heading)}
+        [data-theme="light"] .stat-item{background:#f8f8f8;border-color:rgba(0,0,0,.09);box-shadow:0 2px 8px rgba(0,0,0,.08)}
 
         /* ===== GRADIENT TEXT — primary → secondary ===== */
         .gradient-text{background:linear-gradient(135deg,#d9fe7d,#9481ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
         [data-theme="light"] .gradient-text{background:linear-gradient(135deg,#b8e84a,#9481ff);-webkit-background-clip:text;background-clip:text}
 
-        /* ===== LABELS — boosted size ===== */
-        .section-label{font-size:13px;font-weight:700;color:var(--t3);letter-spacing:.09em;text-transform:uppercase}
+        /* ===== LABELS — V4.1 ===== */
+        .section-label{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.09em;text-transform:uppercase;font-family:var(--font-body)}
         .form-label{font-size:13px;font-weight:600;color:var(--t3);margin-bottom:7px;display:block;letter-spacing:.05em;text-transform:uppercase}
-        .signal-badge{padding:5px 13px;border-radius:100px;font-size:13px;font-weight:700;letter-spacing:.05em}
+        .signal-badge{padding:5px 13px;border-radius:100px;font-size:13px;font-weight:800;letter-spacing:.05em;font-family:var(--font-body)}
 
-        /* ===== HEADER ===== */
-        .header-bar{background:rgba(20,20,20,0.96);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);box-shadow:0 2px 20px rgba(0,0,0,0.6),inset 0 -1px 0 rgba(255,255,255,0.05)}
-        [data-theme="light"] .header-bar{background:rgba(245,245,245,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 1px 0 rgba(0,0,0,.08)}
+        /* ===== HEADER — V4.1 subtle border ===== */
+        .header-bar{background:rgba(20,18,24,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--brd)}
+        [data-theme="light"] .header-bar{background:rgba(245,245,245,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid rgba(0,0,0,.08)}
         [data-theme="light"] .theme-icon-dark{display:none!important}[data-theme="light"] .theme-icon-light{display:block!important}
         [data-theme="dark"] .theme-icon-dark{display:block!important}[data-theme="dark"] .theme-icon-light{display:none!important}
 
@@ -179,19 +178,19 @@
         body,.card,.modal-panel,header,input,select,textarea,.btn-ghost,.btn-primary,.tab-btn,.chat-chip,.stat-item{transition:background-color .3s,color .3s,border-color .3s,box-shadow .3s}
         .chat-image-preview{max-width:200px;max-height:150px;border-radius:12px;border:1px solid var(--brd)}
 
-        /* ===== MAIN NAV TABS ===== */
-        .nav-tab{padding:10px 22px;font-size:14px;font-weight:500;color:var(--t3);border-radius:100px;cursor:pointer;border:none;background:transparent;transition:background-color .18s,color .15s,transform .15s,box-shadow .18s;white-space:nowrap}
-        .nav-tab:hover{color:var(--acc);background:rgba(148,129,255,0.14);transform:translateY(-1px)}
-        .nav-tab.active{color:#000!important;background:var(--pri)!important;font-weight:700;box-shadow:0 4px 20px rgba(217,254,125,0.38),inset 0 1px 0 rgba(255,255,255,0.45);transform:none}
+        /* ===== MAIN NAV TABS — V4.1 pill with borders ===== */
+        .nav-tab{padding:8px 20px;font-size:13px;font-weight:500;font-family:var(--font-body);color:var(--t3);border-radius:100px;cursor:pointer;border:1.5px solid rgba(255,255,255,0.09);background:transparent;transition:all .3s cubic-bezier(0.16,1,0.3,1);white-space:nowrap}
+        .nav-tab:hover{border-color:rgba(255,255,255,0.14);color:var(--t2)}
+        .nav-tab.active{color:#111018!important;background:var(--pri)!important;border-color:transparent!important;font-weight:700;box-shadow:0 2px 10px rgba(218,255,123,0.16)}
         [data-theme="light"] .nav-tab.active{color:#000;box-shadow:0 2px 12px rgba(184,232,74,.4)}
         .journal-tab{padding:8px 18px;font-size:13px;font-weight:500;color:var(--t3);border-radius:14px;cursor:pointer;border:none;background:transparent;transition:all .2s;white-space:nowrap}
         .journal-tab:hover{color:var(--t1);background:rgba(255,255,255,.05)}
         .journal-tab.active{color:#000;background:var(--pri);font-weight:700;box-shadow:0 2px 10px var(--pri-g)}
         .section-page{display:none}.section-page.active{display:block}
 
-        /* Nav pill container — solid emboss */
-        .nav-pill-container{background:#242424!important;box-shadow:var(--emboss)!important;border-color:rgba(255,255,255,0.07)!important}
-        [data-theme="light"] .nav-pill-container{background:#f0f0f0!important;box-shadow:3px 3px 10px rgba(0,0,0,.12),-1px -1px 4px rgba(255,255,255,.9)!important;border-color:rgba(0,0,0,.08)!important}
+        /* Nav pill container — V4.1 subtle border, no heavy emboss */
+        .nav-pill-container{background:var(--card)!important;box-shadow:none!important;border-color:rgba(255,255,255,0.09)!important}
+        [data-theme="light"] .nav-pill-container{background:#f0f0f0!important;box-shadow:none!important;border-color:rgba(0,0,0,.08)!important}
 
         /* ===== HEATMAP ===== */
         .heatmap-cell{border-radius:14px;padding:10px 8px;cursor:pointer;transition:all .25s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:88px;border:1px solid transparent;position:relative;overflow:hidden}
@@ -230,7 +229,12 @@
             .heatmap-grid{grid-template-columns:repeat(4,1fr)!important}
             .corr-grid{font-size:9px!important}
             h2.equity{font-size:2.5rem!important}
-            .portfolio-value{font-size:44px!important}
+            .portfolio-value{font-size:32px!important}
+        }
+        @media(max-width:600px){
+            .nav-pill-container{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+            .nav-pill-container::-webkit-scrollbar{display:none}
+            .nav-tab{flex-shrink:0}
         }
         @media(max-width:480px){
             .heatmap-grid{grid-template-columns:repeat(3,1fr)!important}
@@ -264,15 +268,15 @@
         .scan-strong-buy{animation:scanStrongBuyGlow 2s ease-in-out infinite;border:2px solid rgba(218,255,123,.6);background:linear-gradient(135deg,rgba(218,255,123,.09),rgba(218,255,123,.02))}
         .buy-badge-pulse{animation:buyBadgePulse 1.5s ease-in-out infinite;display:inline-block}
 
-        /* Top Signal cards */
-        .top-sig{border-radius:20px;padding:18px;cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);border:1px solid transparent;position:relative;overflow:hidden;backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px)}
-        .top-sig:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 16px 40px rgba(0,0,0,.5)}
-        [data-theme="light"] .top-sig{box-shadow:0 2px 12px rgba(0,0,0,.07)}
+        /* Top Signal cards — V4.1 border style */
+        .top-sig{border-radius:20px;padding:18px;cursor:pointer;transition:all .25s ease;border:1.5px solid rgba(255,255,255,0.09);position:relative;overflow:hidden;background:var(--card)}
+        .top-sig:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.16);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+        [data-theme="light"] .top-sig{box-shadow:0 2px 8px rgba(0,0,0,.06)}
         .fng-gauge{position:relative;width:140px;height:78px}
         .fng-gauge canvas{width:140px;height:78px}
 
-        /* Account chips */
-        .account-chip{padding:7px 16px;border-radius:100px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--brd);background:#252525;color:var(--t2);transition:all .2s;box-shadow:var(--emboss-sm)}
+        /* Account chips — V4.1 border style */
+        .account-chip{padding:7px 16px;border-radius:100px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid rgba(255,255,255,0.09);background:var(--card);color:var(--t2);transition:all .2s}
         .account-chip.active{background:var(--acc-d);border-color:var(--brd-s);color:var(--acc)}
         .account-chip:hover{border-color:var(--acc);color:var(--acc)}
 
@@ -310,9 +314,11 @@
         .text-xs{font-size:13px!important}
         .text-sm{font-size:14px!important}
 
-        /* RSI table boost */
-        #rsi-table thead tr th{font-size:13px!important;letter-spacing:.06em}
-        #rsi-table tbody tr td{font-size:13px!important}
+        /* RSI table boost — V4.1 */
+        #rsi-table thead tr th{font-size:12px!important;letter-spacing:.06em;font-weight:600}
+        #rsi-table tbody tr td{font-size:13px!important;font-weight:600;padding:7px 10px!important}
+        /* Signal column — more space */
+        #rsi-table th:last-child, #rsi-table td:last-child{min-width:120px}
 
         /* Heatmap cell contrast in light */
         [data-theme="light"] .heatmap-cell .sym{color:rgba(0,0,0,.88)!important;text-shadow:none!important}
@@ -327,10 +333,20 @@
         #ambient-blob-2{bottom:-15%;right:-10%;width:55vw;height:55vh;background:radial-gradient(ellipse at center,rgba(217,254,125,0.035) 0%,transparent 68%);animation:blobDrift 22s ease-in-out infinite alternate-reverse}
         @keyframes blobDrift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(4%,3%) scale(1.06)}}
 
-        /* Strategy cards — GPU hover, no transition:all */
-        .strat-card{will-change:transform}
-        .strat-card:hover{transform:translateY(-4px) scale(1.02)!important;box-shadow:0 16px 40px rgba(0,0,0,0.6)!important}
-        .strat-card:active{transform:translateY(0) scale(0.985)!important}
+        /* Strategy cards — V4.1 border + subtle hover */
+        .strat-card{will-change:transform;position:relative;overflow:hidden;border-radius:20px;border:1.5px solid rgba(255,255,255,0.09)}
+        .strat-card:hover{transform:translateY(-2px) scale(1.01)!important;box-shadow:0 8px 24px rgba(0,0,0,0.4)!important}
+        .strat-card:active{transform:translateY(0) scale(0.99)!important}
+        /* Strategy color top bars — used by JS */
+        .strat-bar{position:absolute;top:0;left:0;right:0;height:3px}
+        .strat-bar-rsi_reversal{background:#b088f9}
+        .strat-bar-bollinger_bounce{background:#5bb5f0}
+        .strat-bar-dip_buyer{background:#f0a35b}
+        .strat-bar-early_gainer{background:#5bf0c8}
+        .strat-bar-dca_accumulator{background:#8e8ea0}
+        .strat-bar-divergence_play{background:#f05bb5}
+        .strat-bar-smart_money{background:#6bffa8}
+        .strat-bar-panic_reversal{background:#f87171}
 
         /* Shimmer skeleton for loading states */
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
@@ -354,17 +370,34 @@
             transition:text-shadow .3s;
         }
 
+        /* ── Coin Insight ── */
+        .quick-sym-btn{padding:5px 14px;font-size:12px;font-weight:700;border-radius:100px;cursor:pointer;border:1px solid var(--brd);background:var(--inp);color:var(--t3);transition:all .18s;letter-spacing:.04em}
+        .quick-sym-btn:hover{border-color:var(--acc);color:var(--acc);background:var(--acc-d)}
+        .quick-sym-btn-lg{padding:8px 20px;font-size:13px;font-weight:700;border-radius:100px;cursor:pointer;border:1px solid var(--brd);background:var(--inp);color:var(--t2);transition:all .18s}
+        .quick-sym-btn-lg:hover{border-color:var(--acc);color:var(--acc);background:var(--acc-d);transform:translateY(-1px)}
+        .shimmer{background:linear-gradient(90deg,var(--inp) 25%,var(--card-h) 50%,var(--inp) 75%);background-size:200% 100%;animation:shimmer-move 1.5s infinite}
+        @keyframes shimmer-move{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        .tf-card{border-radius:20px;padding:16px;border:1px solid var(--brd);background:var(--card);transition:transform .2s,border-color .2s,box-shadow .2s;cursor:default}
+        .tf-card.bull{border-color:rgba(134,239,172,.3);background:linear-gradient(145deg,var(--card),rgba(134,239,172,.04))}
+        .tf-card.bear{border-color:rgba(252,165,165,.3);background:linear-gradient(145deg,var(--card),rgba(252,165,165,.04))}
+        .tf-card:hover{transform:translateY(-2px);box-shadow:var(--emboss)}
+        .level-chip{border-radius:14px;padding:10px 14px;background:var(--inp);border:1px solid var(--brd);text-align:center}
+        .ind-chip{border-radius:16px;padding:12px 14px;background:var(--inp);border:1px solid var(--brd)}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
         /* Portfolio value glow on update */
         @keyframes valueUpdate{0%{opacity:0.4;transform:scale(0.97)}100%{opacity:1;transform:scale(1)}}
         .value-updated{animation:valueUpdate .45s cubic-bezier(.16,1,.3,1)}
 
-        /* Glass panel variant for certain cards */
+        /* Glass panel variant — V4.1 uses regular card */
         .card-glass{
-            background:rgba(32,28,46,0.65)!important;
-            backdrop-filter:blur(32px)!important;
-            -webkit-backdrop-filter:blur(32px)!important;
-            border-color:rgba(148,129,255,0.12)!important;
+            background:var(--card)!important;
+            backdrop-filter:none!important;
+            -webkit-backdrop-filter:none!important;
+            border-color:rgba(255,255,255,0.09)!important;
         }
+        /* Market status card — no purple fill, just colored text */
+        #fng-card{background:var(--card)!important;border-color:rgba(255,255,255,0.09)!important}
 
         /* Active strategy — "LIVE" micro-badge on enabled card */
         .strat-live-badge{
@@ -415,6 +448,12 @@
         .fade-in-1{animation:fadeInUp .5s cubic-bezier(.16,1,.3,1) .07s both}
         .fade-in-2{animation:fadeInUp .5s cubic-bezier(.16,1,.3,1) .14s both}
         .fade-in-3{animation:fadeInUp .5s cubic-bezier(.16,1,.3,1) .21s both}
+
+        /* ===== STEP 17: Sparkline blinking dot ===== */
+        @keyframes sparkBlink{0%,100%{opacity:1}50%{opacity:0.3}}
+        .spark-dot{animation:sparkBlink 1.5s ease-in-out infinite}
+        /* equity-canvas blinking cursor effect */
+        .equity-canvas{position:relative}
     </style>
 </head>
 <body>
@@ -589,7 +628,33 @@
         <div class="max-w-[1400px] mx-auto px-4 sm:px-8">
             <div class="flex justify-between items-center h-14">
                 <div class="flex items-center gap-3">
-                    <div class="brain-icon-bg w-9 h-9 rounded-2xl flex items-center justify-center" style="background:linear-gradient(135deg,#9481ff,#6b5ce7);box-shadow:0 4px 14px rgba(148,129,255,0.45),inset 0 1px 0 rgba(255,255,255,0.2)"><i data-lucide="bot" class="w-5 h-5" style="color:#fff"></i></div>
+                    <svg width="34" height="34" viewBox="0 0 80 80" style="flex-shrink:0">
+                        <defs><filter id="brain-gl"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+                        <g filter="url(#brain-gl)" stroke="#daff7b" stroke-width="1.8" fill="none" stroke-opacity="0.85">
+                            <ellipse cx="40" cy="36" rx="27" ry="23"/>
+                            <path d="M40 59Q42 69 38 71"/>
+                            <circle cx="25" cy="28" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <circle cx="35" cy="22" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <circle cx="48" cy="24" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <circle cx="55" cy="32" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <circle cx="30" cy="38" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <circle cx="42" cy="36" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <circle cx="52" cy="42" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <circle cx="35" cy="48" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <circle cx="48" cy="48" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <circle cx="40" cy="30" r="2.2" fill="#daff7b" fill-opacity="0.7"/>
+                            <line x1="25" y1="28" x2="35" y2="22" stroke-width="0.8" stroke-opacity="0.35"/>
+                            <line x1="35" y1="22" x2="48" y2="24" stroke-width="0.8" stroke-opacity="0.35"/>
+                            <line x1="48" y1="24" x2="55" y2="32" stroke-width="0.8" stroke-opacity="0.35"/>
+                            <line x1="30" y1="38" x2="42" y2="36" stroke-width="0.8" stroke-opacity="0.35"/>
+                            <line x1="42" y1="36" x2="52" y2="42" stroke-width="0.8" stroke-opacity="0.35"/>
+                            <line x1="35" y1="48" x2="48" y2="48" stroke-width="0.8" stroke-opacity="0.35"/>
+                            <line x1="25" y1="28" x2="30" y2="38" stroke-width="0.8" stroke-opacity="0.35"/>
+                            <line x1="55" y1="32" x2="52" y2="42" stroke-width="0.8" stroke-opacity="0.35"/>
+                            <line x1="40" y1="30" x2="42" y2="36" stroke-width="0.8" stroke-opacity="0.35"/>
+                            <line x1="30" y1="38" x2="35" y2="48" stroke-width="0.8" stroke-opacity="0.35"/>
+                        </g>
+                    </svg>
                     <span class="font-bold" style="font-size:17px;color:var(--t1);letter-spacing:-0.02em">The Brain</span>
                     <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style="background:rgba(148,129,255,0.12);border:1px solid rgba(148,129,255,0.25)"><div class="live-dot"></div><span style="font-size:12px;font-weight:700;color:var(--acc)">Live</span></div>
                 </div>
@@ -614,6 +679,7 @@
             <button class="nav-tab active" onclick="switchSection('portfolio')">Portfolio</button>
             <button class="nav-tab" onclick="switchSection('heatmap')">Heatmap</button>
             <button class="nav-tab" onclick="switchSection('correlation')">Correlation</button>
+            <button class="nav-tab" onclick="switchSection('insight')">Insight</button>
             <button class="nav-tab" onclick="switchSection('news')">News</button>
             <button class="nav-tab" onclick="switchSection('journal')">Trades</button>
             <button class="nav-tab" onclick="switchSection('strategy')">Strategy</button>
@@ -675,18 +741,37 @@
 
             <!-- FEAR & GREED + BOT STATS + AI BRIEFING ROW -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 fade-in-3">
-                <!-- Fear & Greed Index -->
-                <div class="card p-4">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i data-lucide="gauge" class="w-4 h-4" style="color:var(--warn)"></i>
-                        <span class="text-xs font-semibold" style="color:var(--t3)">Fear & Greed Index</span>
+                <!-- Fear & Greed Index — WOW gauge -->
+                <div class="card p-5 overflow-hidden relative" id="fng-card">
+                    <!-- Dynamic background glow -->
+                    <div id="fng-glow" class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse at 50% 120%,rgba(234,179,8,.07) 0%,transparent 65%);transition:background 1s"></div>
+
+                    <div class="flex items-center justify-between mb-1 relative z-10">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="gauge" class="w-4 h-4" style="color:var(--warn)"></i>
+                            <span class="text-xs font-semibold" style="color:var(--t3)">Fear & Greed Index</span>
+                        </div>
+                        <div id="fng-change" class="text-[10px] font-semibold" style="color:var(--t4)"></div>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <div class="fng-gauge"><canvas id="fng-canvas" width="220" height="120"></canvas></div>
-                        <div>
-                            <div id="fng-value" class="text-3xl font-bold mono">—</div>
-                            <div id="fng-label" class="text-xs font-semibold mt-1" style="color:var(--t3)">Loading...</div>
-                            <div id="fng-change" class="text-[10px] mt-1" style="color:var(--t4)"></div>
+
+                    <!-- SVG Donut Arc Gauge — V4.1 Step 8 -->
+                    <div class="flex flex-col items-center relative z-10">
+                        <div id="fng-svg-arc" style="width:260px;height:130px;display:flex;align-items:center;justify-content:center"></div>
+                        <div style="text-align:center;margin-top:-4px">
+                            <div id="fng-value" class="font-black" style="font-size:38px;line-height:1;font-family:var(--font-heading)">—</div>
+                            <div id="fng-label" class="font-bold" style="font-size:12px;letter-spacing:.06em;margin-top:4px;text-transform:uppercase">Loading…</div>
+                        </div>
+                    </div>
+
+                    <!-- Extra market stats strip -->
+                    <div class="grid grid-cols-2 gap-2 mt-4 relative z-10">
+                        <div class="rounded-xl px-3 py-2" style="background:var(--inp);border:1px solid var(--brd)">
+                            <div class="text-[9px] font-semibold mb-0.5" style="color:var(--t4)">BTC DOMINANCE</div>
+                            <div id="fng-btc-dom" class="text-sm font-black mono" style="color:var(--pri)">—%</div>
+                        </div>
+                        <div class="rounded-xl px-3 py-2" style="background:var(--inp);border:1px solid var(--brd)">
+                            <div class="text-[9px] font-semibold mb-0.5" style="color:var(--t4)">MARKET CAP</div>
+                            <div id="fng-mktcap" class="text-sm font-black mono" style="color:var(--acc)">—</div>
                         </div>
                     </div>
                 </div>
@@ -719,12 +804,21 @@
                     </div>
                     <!-- Mini trade history chart -->
                     <div style="border-top:1px solid var(--brd);padding-top:8px">
-                        <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center justify-between mb-2">
                             <span class="text-[10px] font-medium" style="color:var(--t4)">Trade History</span>
                             <span id="home-trade-count" class="text-[10px] font-medium" style="color:var(--t4)"></span>
                         </div>
-                        <canvas id="home-pnl-chart" style="width:100%;height:44px;display:block"></canvas>
-                        <div id="home-no-trades" class="text-[10px] text-center py-2" style="color:var(--t4)">No trades yet — bot awaiting signals</div>
+                        <div id="home-chart-wrap" style="display:none">
+                            <canvas id="home-pnl-chart" style="width:100%;height:48px;display:block;border-radius:8px;overflow:hidden"></canvas>
+                            <div class="flex justify-between mt-1" style="font-size:9px;color:var(--t4)">
+                                <span id="home-chart-oldest"></span>
+                                <span id="home-chart-newest"></span>
+                            </div>
+                        </div>
+                        <div id="home-no-trades" class="flex flex-col items-center justify-center gap-1 py-3">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" style="background:var(--inp)"><i data-lucide="bar-chart-2" class="w-3.5 h-3.5" style="color:var(--t4)"></i></div>
+                            <span class="text-[10px]" style="color:var(--t4)">Awaiting first trade</span>
+                        </div>
                     </div>
                 </div>
                 <!-- AI Daily Briefing -->
@@ -901,6 +995,265 @@
         </div>
 
         <!-- NEWS SECTION -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- COIN INSIGHT SECTION                                            -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div id="section-insight" class="section-page">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold flex items-center gap-3">
+                        <span class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,var(--acc),#6b5ce7)">
+                            <i data-lucide="brain-circuit" class="w-5 h-5" style="color:#fff"></i>
+                        </span>
+                        Coin Insight
+                    </h2>
+                    <p class="text-sm mt-1 ml-12" style="color:var(--t4)">AI-powered multi-timeframe analysis — quick buy/sell/hold verdict</p>
+                </div>
+            </div>
+
+            <!-- Search card -->
+            <div class="card p-6 mb-5">
+                <div class="flex gap-3">
+                    <div class="relative flex-1">
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style="color:var(--t4)">
+                            <i data-lucide="search" class="w-5 h-5"></i>
+                        </div>
+                        <input id="insight-input" type="text" placeholder="Enter coin — BTC, ETH, SOL, JUP…"
+                            class="w-full rounded-2xl pl-12 pr-5 py-4 text-base font-medium uppercase"
+                            style="background:var(--inp);border:1px solid var(--brd);color:var(--t1);outline:none;transition:border-color .2s,box-shadow .2s;box-shadow:var(--inset)"
+                            onfocus="this.style.borderColor='var(--acc)';this.style.boxShadow='0 0 0 3px rgba(148,129,255,.18),var(--inset)'"
+                            onblur="this.style.borderColor='var(--brd)';this.style.boxShadow='var(--inset)'"
+                            onkeydown="if(event.key==='Enter')runCoinInsight(this.value)"
+                            autocomplete="off" autocapitalize="characters" spellcheck="false" />
+                    </div>
+                    <button onclick="runCoinInsight(document.getElementById('insight-input').value)"
+                        class="btn-primary px-7 py-4 text-sm font-bold rounded-2xl flex items-center gap-2 shrink-0">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> Analyze
+                    </button>
+                </div>
+                <!-- Quick symbols -->
+                <div class="flex flex-wrap gap-2 mt-4 items-center">
+                    <span class="text-xs font-semibold mr-1" style="color:var(--t4)">Quick:</span>
+                    <button onclick="quickInsight('BTC')"  class="quick-sym-btn">BTC</button>
+                    <button onclick="quickInsight('ETH')"  class="quick-sym-btn">ETH</button>
+                    <button onclick="quickInsight('SOL')"  class="quick-sym-btn">SOL</button>
+                    <button onclick="quickInsight('BNB')"  class="quick-sym-btn">BNB</button>
+                    <button onclick="quickInsight('XRP')"  class="quick-sym-btn">XRP</button>
+                    <button onclick="quickInsight('ADA')"  class="quick-sym-btn">ADA</button>
+                    <button onclick="quickInsight('AVAX')" class="quick-sym-btn">AVAX</button>
+                    <button onclick="quickInsight('LINK')" class="quick-sym-btn">LINK</button>
+                </div>
+            </div>
+
+            <!-- Loading skeleton -->
+            <div id="insight-loading" style="display:none">
+                <div class="card p-5 mb-4 flex items-center gap-4" style="animation:pulse 1.5s infinite">
+                    <div class="w-12 h-12 rounded-2xl shimmer"></div>
+                    <div class="flex-1"><div class="shimmer h-5 rounded-lg w-48 mb-2"></div><div class="shimmer h-4 rounded-lg w-32"></div></div>
+                    <div class="shimmer h-8 rounded-xl w-32"></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="card p-6 shimmer" style="height:180px;animation:pulse 1.5s infinite"></div>
+                    <div class="card p-6 shimmer" style="height:180px;animation:pulse 1.5s infinite 0.15s"></div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div class="card p-4 shimmer" style="height:130px;animation:pulse 1.5s infinite 0.1s"></div>
+                    <div class="card p-4 shimmer" style="height:130px;animation:pulse 1.5s infinite 0.2s"></div>
+                    <div class="card p-4 shimmer" style="height:130px;animation:pulse 1.5s infinite 0.3s"></div>
+                    <div class="card p-4 shimmer" style="height:130px;animation:pulse 1.5s infinite 0.4s"></div>
+                </div>
+                <p class="text-center text-sm mt-2" style="color:var(--t4)">Scanning all timeframes + running AI analysis…</p>
+            </div>
+
+            <!-- Results (hidden until search) -->
+            <div id="insight-results" style="display:none">
+
+                <!-- Coin header bar -->
+                <div class="card p-5 mb-4 flex flex-wrap items-center gap-4 justify-between">
+                    <div class="flex items-center gap-3">
+                        <div id="ir-icon" class="w-11 h-11 rounded-2xl flex items-center justify-center text-base font-black" style="background:var(--acc-d);color:var(--acc)">--</div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span id="ir-symbol" class="text-xl font-black" style="color:var(--t1)">--</span>
+                                <span class="text-sm font-medium" style="color:var(--t4)">/USDT</span>
+                            </div>
+                            <div class="text-xs mt-0.5" style="color:var(--t4)" id="ir-updated">--</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                            <div id="ir-price" class="text-2xl font-black mono" style="color:var(--t1)">--</div>
+                            <div class="flex gap-3 justify-end mt-1">
+                                <span id="ir-ch24" class="text-xs font-semibold mono">--</span>
+                                <span id="ir-ch7d" class="text-xs font-semibold mono">--</span>
+                            </div>
+                        </div>
+                        <div id="ir-verdict-badge" class="px-5 py-2.5 rounded-2xl text-sm font-black tracking-wide">--</div>
+                    </div>
+                </div>
+
+                <!-- Verdict + AI Summary row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+                    <!-- Verdict card -->
+                    <div class="card p-6 flex flex-col gap-4">
+                        <div class="flex items-center justify-between">
+                            <span class="section-label">AI Verdict</span>
+                            <span id="ir-conf-label" class="text-xs font-bold px-3 py-1 rounded-full" style="background:var(--acc-d);color:var(--acc)">-- confidence</span>
+                        </div>
+                        <!-- Confidence bar -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-2" style="color:var(--t4)">
+                                <span>Confidence</span>
+                                <span id="ir-conf-pct" class="font-bold" style="color:var(--t1)">--%</span>
+                            </div>
+                            <div class="rounded-full overflow-hidden" style="height:8px;background:var(--inp)">
+                                <div id="ir-conf-bar" class="h-full rounded-full transition-all duration-700" style="width:0%;background:var(--acc)"></div>
+                            </div>
+                        </div>
+                        <!-- Bias -->
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-semibold" style="color:var(--t4)">Outlook:</span>
+                            <span id="ir-bias" class="text-sm font-bold" style="color:var(--t1)">--</span>
+                        </div>
+                        <!-- Move targets -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="rounded-2xl p-3 text-center" style="background:var(--ok-d);border:1px solid rgba(134,239,172,.2)">
+                                <div class="text-xs mb-1" style="color:var(--t4)">Target upside</div>
+                                <div id="ir-upside" class="text-lg font-black mono" style="color:var(--ok)">--%</div>
+                            </div>
+                            <div class="rounded-2xl p-3 text-center" style="background:var(--err-d);border:1px solid rgba(252,165,165,.2)">
+                                <div class="text-xs mb-1" style="color:var(--t4)">Risk downside</div>
+                                <div id="ir-downside" class="text-lg font-black mono" style="color:var(--err)">--%</div>
+                            </div>
+                        </div>
+                        <!-- Bullish alignment score -->
+                        <div>
+                            <div class="text-xs mb-2" style="color:var(--t4)">Bullish alignment <span id="ir-bull-score" class="font-bold" style="color:var(--t1)">0</span>/10</div>
+                            <div class="flex gap-1" id="ir-bull-dots"></div>
+                        </div>
+                    </div>
+
+                    <!-- AI Summary card -->
+                    <div class="card p-6 flex flex-col gap-4">
+                        <span class="section-label">AI Analysis</span>
+                        <p id="ir-summary" class="text-sm leading-relaxed flex-1" style="color:var(--t2)">--</p>
+                        <!-- Position advice (shown only if holding) -->
+                        <div id="ir-pos-advice-wrap" style="display:none">
+                            <div class="rounded-2xl p-4" style="background:var(--warn-d);border:1px solid rgba(252,211,77,.25)">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i data-lucide="wallet" class="w-4 h-4" style="color:var(--warn)"></i>
+                                    <span class="text-xs font-bold" style="color:var(--warn)">YOUR POSITION</span>
+                                </div>
+                                <div id="ir-pos-stats" class="text-xs font-medium mb-2" style="color:var(--t3)">--</div>
+                                <p id="ir-pos-advice" class="text-sm font-semibold" style="color:var(--t1)">--</p>
+                            </div>
+                        </div>
+                        <!-- Fear & Greed -->
+                        <div class="flex items-center justify-between rounded-2xl px-4 py-3" style="background:var(--inp)">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="gauge" class="w-4 h-4" style="color:var(--t4)"></i>
+                                <span class="text-xs" style="color:var(--t4)">Fear & Greed Index</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div id="ir-fg-bar" class="w-16 h-1.5 rounded-full overflow-hidden" style="background:var(--brd)">
+                                    <div id="ir-fg-fill" class="h-full rounded-full" style="width:50%"></div>
+                                </div>
+                                <span id="ir-fg-val" class="text-xs font-bold mono" style="color:var(--t1)">--</span>
+                                <span id="ir-fg-label" class="text-xs" style="color:var(--t3)">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeframe grid -->
+                <div class="mb-2"><span class="section-label">Timeframe Analysis</span></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="ir-tf-grid">
+                    <!-- filled by JS -->
+                </div>
+
+                <!-- Key Levels -->
+                <div class="card p-5 mb-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="layers" class="w-4 h-4" style="color:var(--acc)"></i>
+                        <span class="section-label">Key Levels (30-day range)</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" id="ir-levels-grid">
+                        <!-- filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Indicators row -->
+                <div class="card p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="activity" class="w-4 h-4" style="color:var(--pri)"></i>
+                        <span class="section-label">4H Indicators</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="ir-indicators-grid">
+                        <!-- filled by JS -->
+                    </div>
+                </div>
+
+                <!-- History & Potential card -->
+                <div id="ir-history-card" class="card p-5 mt-4" style="display:none">
+                    <div class="flex items-center gap-2 mb-5">
+                        <i data-lucide="clock" class="w-4 h-4" style="color:var(--warn)"></i>
+                        <span class="section-label">History &amp; Potential</span>
+                        <span id="ir-cg-rank" class="text-xs font-bold px-2 py-0.5 rounded-full ml-auto" style="background:var(--acc-d);color:var(--acc)"></span>
+                    </div>
+                    <!-- ATH / ATL -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="rounded-2xl p-4" style="background:linear-gradient(135deg,rgba(134,239,172,.08),rgba(134,239,172,.03));border:1px solid rgba(134,239,172,.2)">
+                            <div class="text-xs mb-1 flex items-center gap-1" style="color:var(--t4)"><i data-lucide="trending-up" class="w-3 h-3"></i> All-Time High</div>
+                            <div id="ir-ath-price" class="text-lg font-black mono" style="color:var(--ok)">--</div>
+                            <div id="ir-ath-date"  class="text-xs mt-0.5" style="color:var(--t4)">--</div>
+                            <div id="ir-to-ath"    class="text-sm font-bold mt-2" style="color:var(--ok)">--</div>
+                        </div>
+                        <div class="rounded-2xl p-4" style="background:linear-gradient(135deg,rgba(252,165,165,.08),rgba(252,165,165,.03));border:1px solid rgba(252,165,165,.2)">
+                            <div class="text-xs mb-1 flex items-center gap-1" style="color:var(--t4)"><i data-lucide="trending-down" class="w-3 h-3"></i> All-Time Low</div>
+                            <div id="ir-atl-price" class="text-lg font-black mono" style="color:var(--err)">--</div>
+                            <div id="ir-atl-date"  class="text-xs mt-0.5" style="color:var(--t4)">--</div>
+                            <div id="ir-from-ath"  class="text-sm font-bold mt-2" style="color:var(--err)">--</div>
+                        </div>
+                    </div>
+                    <!-- Fibonacci recovery targets -->
+                    <div class="mb-4">
+                        <div class="text-xs font-semibold mb-2" style="color:var(--t4)">Recovery Targets — Fibonacci to ATH</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2" id="ir-fib-grid"></div>
+                    </div>
+                    <!-- Year-by-year -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs font-semibold" style="color:var(--t4)">Year-by-Year Price (year-end)</div>
+                            <div id="ir-launch-info" class="text-xs" style="color:var(--t4)"></div>
+                        </div>
+                        <div class="flex gap-2 pb-1 flex-wrap" id="ir-yearly-chips"></div>
+                        <div id="ir-alltime-return" class="text-xs mt-3 font-bold text-center py-2.5 rounded-xl" style="background:var(--inp)"></div>
+                    </div>
+                </div>
+
+            </div><!-- /insight-results -->
+
+            <!-- Empty state -->
+            <div id="insight-empty" class="flex flex-col items-center justify-center py-24 gap-5">
+                <div class="w-20 h-20 rounded-3xl flex items-center justify-center" style="background:var(--acc-d)">
+                    <i data-lucide="brain-circuit" class="w-10 h-10" style="color:var(--acc)"></i>
+                </div>
+                <div class="text-center">
+                    <p class="text-base font-semibold" style="color:var(--t2)">Enter any coin to get an instant AI verdict</p>
+                    <p class="text-sm mt-1" style="color:var(--t4)">Multi-timeframe scan · RSI · MACD · Supertrend · Support/Resistance · Fear & Greed</p>
+                </div>
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button onclick="quickInsight('BTC')"  class="quick-sym-btn-lg">Bitcoin</button>
+                    <button onclick="quickInsight('ETH')"  class="quick-sym-btn-lg">Ethereum</button>
+                    <button onclick="quickInsight('SOL')"  class="quick-sym-btn-lg">Solana</button>
+                </div>
+            </div>
+
+        </div><!-- /section-insight -->
+
         <div id="section-news" class="section-page">
             <div class="flex justify-between items-center mb-6">
                 <div><h2 class="text-2xl font-bold">Crypto News</h2><p class="text-sm mt-1" style="color:var(--t4)">Latest headlines filtered by your coins</p></div>
@@ -1139,7 +1492,10 @@
                 <div><h2 class="text-2xl font-bold">Auto-Trader Bot</h2><p class="text-sm mt-1" style="color:var(--t4)">Multi-strategy spot trading — enable strategies, compare performance, find what works</p></div>
                 <div class="flex gap-2">
                     <button id="btn-refresh-trader" onclick="loadTraderData()" class="px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2" style="background:var(--inp);color:var(--t2);border:1px solid var(--brd)"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh</button>
-                    <button id="btn-emergency-stop" onclick="emergencyStop()" class="px-4 py-2.5 text-xs font-bold rounded-xl flex items-center gap-2" style="background:#e05555;color:#fff;border:none;box-shadow:0 2px 10px rgba(224,85,85,0.40),inset 0 1px 0 rgba(255,255,255,0.18);letter-spacing:0.04em" onmouseover="this.style.background='#d04040';this.style.boxShadow='0 4px 16px rgba(224,85,85,0.55),inset 0 1px 0 rgba(255,255,255,0.18)'" onmouseout="this.style.background='#e05555';this.style.boxShadow='0 2px 10px rgba(224,85,85,0.40),inset 0 1px 0 rgba(255,255,255,0.18)'">⛔ EMERGENCY STOP</button>
+                    <button id="btn-emergency-stop" onclick="emergencyStop()" class="btn-danger flex items-center gap-2" style="padding:10px 20px;font-size:13px;letter-spacing:0.04em">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        EMERGENCY STOP
+                    </button>
                 </div>
             </div>
 
@@ -1331,6 +1687,7 @@
         <button class="mobile-nav-btn active" onclick="switchSection('portfolio')"><i data-lucide="wallet" class="w-5 h-5"></i>Portfolio</button>
         <button class="mobile-nav-btn" onclick="switchSection('heatmap')"><i data-lucide="grid-3x3" class="w-5 h-5"></i>Heatmap</button>
         <button class="mobile-nav-btn" onclick="switchSection('correlation')"><i data-lucide="network" class="w-5 h-5"></i>Correl.</button>
+        <button class="mobile-nav-btn" onclick="switchSection('insight')"><i data-lucide="brain-circuit" class="w-5 h-5"></i>Insight</button>
         <button class="mobile-nav-btn" onclick="switchSection('news')"><i data-lucide="newspaper" class="w-5 h-5"></i>News</button>
         <button class="mobile-nav-btn" onclick="switchSection('journal')"><i data-lucide="scroll-text" class="w-5 h-5"></i>Trades</button>
         <button class="mobile-nav-btn" onclick="switchSection('strategy')"><i data-lucide="flask-conical" class="w-5 h-5"></i>Strategy</button>
@@ -1425,6 +1782,7 @@
         if(name==='journal'){loadTradeJournal();loadAlerts();loadActivity();}
         if(name==='strategy'){loadTVChart();updateStrategyParams();}
         if(name==='autotrader')loadTraderData();
+        if(name==='insight'){document.getElementById('insight-empty').style.display='flex';document.getElementById('insight-results').style.display='none';document.getElementById('insight-loading').style.display='none';}
     }
 
     // ===== MULTI-ACCOUNT =====
@@ -2364,41 +2722,82 @@
         }catch(e){document.getElementById('fng-value').textContent='—';document.getElementById('fng-label').textContent='Unavailable'}
     }
 
+    let _fngAnimTarget=0,_fngAnimCurrent=0,_fngAnimRaf=null;
     function drawFNG(val,label,prev){
+        const color=val<=20?'#ef4444':val<=40?'#f97316':val<=60?'#eab308':val<=80?'#22c55e':'#16a34a';
+        const glowRgb=val<=20?'252,165,165':val<=40?'251,146,60':val<=60?'252,211,77':val<=80?'134,239,172':'[86,239,172]';
         document.getElementById('fng-value').textContent=val;
-        let color=val<=20?'#ef4444':val<=40?'#f97316':val<=60?'#eab308':val<=80?'#22c55e':'#15803d';
         document.getElementById('fng-value').style.color=color;
-        document.getElementById('fng-label').textContent=label;document.getElementById('fng-label').style.color=color;
-        if(prev!==null){
-            const diff=val-prev;const diffC=diff>=0?'var(--ok)':'var(--err)';
-            document.getElementById('fng-change').innerHTML=`<span style="color:${diffC}">${diff>=0?'+':''}${diff}</span> vs yesterday`;
+        document.getElementById('fng-label').textContent=label;
+        document.getElementById('fng-label').style.color=color;
+        // Dynamic card glow
+        const glowEl=document.getElementById('fng-glow');
+        if(glowEl)glowEl.style.background=`radial-gradient(ellipse at 50% 120%,rgba(${val<=20?'252,165,165':val<=40?'251,146,60':val<=60?'252,211,77':val<=80?'134,239,172':'86,239,172'},.10) 0%,transparent 65%)`;
+        if(prev!==null&&prev!==undefined){
+            const diff=val-prev;
+            document.getElementById('fng-change').innerHTML=`<span style="color:${diff>=0?'var(--ok)':'var(--err)'}">${diff>=0?'▲':'▼'}${Math.abs(diff)}</span> <span style="color:var(--t4)">vs yesterday</span>`;
         }
-        const canvas=document.getElementById('fng-canvas');if(!canvas)return;
-        const ctx=canvas.getContext('2d'),w=220,h=120,cx=w/2,cy=h-8;
-        ctx.clearRect(0,0,w,h);
-        // Outer track (faint background)
-        ctx.beginPath();ctx.arc(cx,cy,88,Math.PI,0);ctx.lineWidth=8;ctx.strokeStyle='rgba(255,255,255,.05)';ctx.stroke();
-        // Inner track (faint background)
-        ctx.beginPath();ctx.arc(cx,cy,72,Math.PI,0);ctx.lineWidth=5;ctx.strokeStyle='rgba(255,255,255,.04)';ctx.stroke();
-        // Gradient fill arc (outer)
-        const grad=ctx.createLinearGradient(0,0,w,0);
-        grad.addColorStop(0,'#ef4444');grad.addColorStop(0.25,'#f97316');grad.addColorStop(0.5,'#eab308');grad.addColorStop(0.75,'#22c55e');grad.addColorStop(1,'#15803d');
-        const angle=Math.PI+(val/100)*Math.PI;
-        ctx.beginPath();ctx.arc(cx,cy,88,Math.PI,angle);ctx.lineWidth=8;ctx.lineCap='round';ctx.strokeStyle=grad;ctx.stroke();
-        // Inner accent arc (shorter, secondary echo)
-        ctx.beginPath();ctx.arc(cx,cy,72,Math.PI,Math.PI+(val/100)*Math.PI*0.88);ctx.lineWidth=4;ctx.lineCap='round';ctx.strokeStyle=color+'77';ctx.stroke();
-        // Tick marks at 25, 50, 75
-        [25,50,75].forEach(t=>{
-            const a=Math.PI+(t/100)*Math.PI;
-            ctx.beginPath();ctx.moveTo(cx+93*Math.cos(a),cy+93*Math.sin(a));ctx.lineTo(cx+100*Math.cos(a),cy+100*Math.sin(a));
-            ctx.lineWidth=1.5;ctx.strokeStyle='rgba(255,255,255,.2)';ctx.stroke();
-        });
-        // Glowing needle dot at arc tip
-        const nx=cx+88*Math.cos(angle),ny=cy+88*Math.sin(angle);
-        ctx.shadowBlur=16;ctx.shadowColor=color;
-        ctx.beginPath();ctx.arc(nx,ny,7,0,2*Math.PI);ctx.fillStyle=color;ctx.fill();
-        ctx.shadowBlur=0;
-        ctx.beginPath();ctx.arc(nx,ny,3,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();
+        // Animate needle
+        _fngAnimTarget=val;
+        if(_fngAnimRaf)cancelAnimationFrame(_fngAnimRaf);
+        function animate(){
+            _fngAnimCurrent+=(_fngAnimTarget-_fngAnimCurrent)*0.08;
+            if(Math.abs(_fngAnimTarget-_fngAnimCurrent)<0.2)_fngAnimCurrent=_fngAnimTarget;
+            renderFNGCanvas(_fngAnimCurrent,color);
+            if(_fngAnimCurrent!==_fngAnimTarget)_fngAnimRaf=requestAnimationFrame(animate);
+        }
+        animate();
+        // Load global market stats
+        fetchGlobalMarket();
+    }
+
+    // ── V4.1 Step 8: SVG Donut Arc Gauge (replaces canvas) ──────────────
+    function renderFNGCanvas(val,color){
+        const container=document.getElementById('fng-svg-arc');if(!container)return;
+        const r=100,cx=130,cy=118,sw=12;
+        const circumference=Math.PI*r;
+        const pct=Math.max(0,Math.min(100,val))/100;
+        const offset=circumference*(1-pct);
+        // Indicator dot position along the arc
+        const angle=Math.PI+pct*Math.PI;
+        const dx=cx+r*Math.cos(angle),dy=cy+r*Math.sin(angle);
+        container.innerHTML=`<svg width="260" height="130" viewBox="0 0 260 130">
+            <!-- Background track -->
+            <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="${sw}" stroke-linecap="round"/>
+            <!-- Glow arc -->
+            <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="${color}" stroke-width="${sw+8}" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" opacity="0.12"/>
+            <!-- Active arc -->
+            <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" style="transition:stroke-dashoffset 0.08s linear"/>
+            <!-- Indicator dot — outer glow -->
+            <circle cx="${dx}" cy="${dy}" r="10" fill="${color}" opacity="0.2"/>
+            <!-- Indicator dot — solid -->
+            <circle cx="${dx}" cy="${dy}" r="6" fill="${color}"/>
+            <!-- Indicator dot — center hole -->
+            <circle cx="${dx}" cy="${dy}" r="2.5" fill="#141218"/>
+            <!-- Scale labels -->
+            <text x="4" y="126" fill="var(--t4)" font-size="9" font-weight="600" font-family="var(--font-body)">0</text>
+            <text x="130" y="10" fill="var(--t4)" font-size="9" font-weight="600" font-family="var(--font-body)" text-anchor="middle">50</text>
+            <text x="256" y="126" fill="var(--t4)" font-size="9" font-weight="600" font-family="var(--font-body)" text-anchor="end">100</text>
+        </svg>`;
+    }
+
+    async function fetchGlobalMarket(){
+        try{
+            const domEl=document.getElementById('fng-btc-dom');
+            const mcEl=document.getElementById('fng-mktcap');
+            const cached=localStorage.getItem('brain_global_mkt');
+            if(cached){const c=JSON.parse(cached);if(Date.now()-c.ts<1800000){if(domEl)domEl.textContent=c.dom+'%';if(mcEl)mcEl.textContent=c.mc;return;}}
+            const r=await fetch('https://api.coingecko.com/api/v3/global');
+            if(!r.ok)return;
+            const d=await r.json();
+            const dom=d.data?.market_cap_percentage?.btc;
+            const mc=d.data?.total_market_cap?.usd;
+            const domStr=dom?dom.toFixed(1):'—';
+            const mcStr=mc?`$${mc>=1e12?(mc/1e12).toFixed(2)+'T':(mc/1e9).toFixed(0)+'B'}`:'—';
+            localStorage.setItem('brain_global_mkt',JSON.stringify({dom:domStr,mc:mcStr,ts:Date.now()}));
+            if(domEl)domEl.textContent=domStr+'%';
+            if(mcEl)mcEl.textContent=mcStr;
+        }catch{}
     }
 
     // ===== AI DAILY BRIEFING =====
@@ -2963,10 +3362,15 @@
     function drawHomePnlChart(){
         const canvas=document.getElementById('home-pnl-chart');
         const noEl=document.getElementById('home-no-trades');
+        const wrapEl=document.getElementById('home-chart-wrap');
         if(!canvas)return;
         const trades=traderHistory.slice(0,30).reverse();
-        if(!trades.length){canvas.style.display='none';if(noEl)noEl.classList.remove('hidden');return;}
-        canvas.style.display='block';if(noEl)noEl.classList.add('hidden');
+        if(!trades.length){if(wrapEl)wrapEl.style.display='none';if(noEl)noEl.style.display='flex';lucide.createIcons();return;}
+        if(wrapEl)wrapEl.style.display='block';if(noEl)noEl.style.display='none';
+        // Oldest / newest labels
+        const oldEl=document.getElementById('home-chart-oldest'),newEl=document.getElementById('home-chart-newest');
+        if(oldEl&&trades[0]?.closeTime)oldEl.textContent=new Date(trades[0].closeTime).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+        if(newEl&&trades[trades.length-1]?.closeTime)newEl.textContent=new Date(trades[trades.length-1].closeTime).toLocaleDateString(undefined,{month:'short',day:'numeric'});
         const dpr=window.devicePixelRatio||1;
         const w=canvas.parentElement?.offsetWidth||200,h=44;
         canvas.width=w*dpr;canvas.height=h*dpr;
@@ -2976,7 +3380,8 @@
         ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=1;
         ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();ctx.setLineDash([]);
         const maxP=Math.max(...trades.map(t=>Math.abs(t.pnl||0)),0.01);
-        const n=trades.length,gap=2,barW=Math.max(4,Math.floor((w-(n-1)*gap)/n));
+        const n=trades.length,gap=2;
+        const barW=Math.min(16,Math.max(4,Math.floor((w-(n-1)*gap)/n)));
         const totalW=n*(barW+gap)-gap;const sx=Math.max(0,(w-totalW)/2);
         trades.forEach((t,i)=>{
             const p=t.pnl||0,bh=Math.max(3,(Math.abs(p)/maxP)*((h/2)-5));
@@ -3231,6 +3636,276 @@
                 loadTraderData();
             }else toast('Failed: '+d.error,'error');
         }catch(e){toast('Error: '+e.message,'error')}
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // COIN INSIGHT
+    // ═══════════════════════════════════════════════════════════════════════
+
+    function quickInsight(sym) {
+        document.getElementById('insight-input').value = sym;
+        runCoinInsight(sym);
+    }
+
+    async function runCoinInsight(raw) {
+        const sym = (raw || document.getElementById('insight-input').value || '').toUpperCase().replace(/USDT$/i,'').trim();
+        if (!sym) { toast('Enter a coin symbol first', 'error'); return; }
+
+        document.getElementById('insight-empty').style.display   = 'none';
+        document.getElementById('insight-results').style.display = 'none';
+        document.getElementById('insight-loading').style.display = 'block';
+
+        try {
+            const r = await fetch(`/api/smart-scanner?action=coinInsight&symbol=${encodeURIComponent(sym)}`);
+            const d = await r.json();
+            if (!r.ok || d.error) { toast(d.error || 'Analysis failed', 'error'); showInsightEmpty(); return; }
+            renderInsight(d);
+        } catch(e) {
+            toast('Network error — try again', 'error');
+            showInsightEmpty();
+        }
+    }
+
+    function showInsightEmpty() {
+        document.getElementById('insight-loading').style.display = 'none';
+        document.getElementById('insight-empty').style.display   = 'flex';
+    }
+
+    function insightVerdictStyle(verdict) {
+        const v = (verdict || '').toUpperCase();
+        if (v.includes('STRONG BUY'))  return { bg:'rgba(134,239,172,.18)', color:'#86efac', border:'rgba(134,239,172,.4)', glow:'0 0 20px rgba(134,239,172,.25)' };
+        if (v.includes('BUY'))         return { bg:'rgba(217,254,125,.18)', color:'#d9fe7d', border:'rgba(217,254,125,.4)', glow:'0 0 20px rgba(217,254,125,.25)' };
+        if (v.includes('STRONG SELL')) return { bg:'rgba(252,165,165,.22)', color:'#f87171', border:'rgba(252,165,165,.5)', glow:'0 0 20px rgba(252,165,165,.3)' };
+        if (v.includes('SELL'))        return { bg:'rgba(252,165,165,.14)', color:'#fca5a5', border:'rgba(252,165,165,.3)', glow:'none' };
+        return { bg:'rgba(252,211,77,.14)', color:'#fcd34d', border:'rgba(252,211,77,.3)', glow:'none' };
+    }
+
+    function fmtPrice(p) {
+        if (!p) return '--';
+        if (p >= 1000) return '$' + p.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+        if (p >= 1)    return '$' + p.toFixed(4);
+        return '$' + p.toFixed(6);
+    }
+
+    function fmtChg(v) {
+        if (v == null) return '--';
+        const sign = v >= 0 ? '+' : '';
+        return `${sign}${v.toFixed(2)}%`;
+    }
+
+    function chgColor(v) { return v >= 0 ? 'var(--ok)' : 'var(--err)'; }
+
+    function fmtLevel(v) {
+        if (!v) return '--';
+        if (v >= 1000) return '$' + v.toLocaleString(undefined,{maximumFractionDigits:0});
+        if (v >= 1)    return '$' + v.toFixed(4);
+        return '$' + v.toFixed(6);
+    }
+
+    function renderInsight(d) {
+        document.getElementById('insight-loading').style.display = 'none';
+        document.getElementById('insight-results').style.display = 'block';
+
+        const vs = insightVerdictStyle(d.verdict);
+
+        // Header bar
+        document.getElementById('ir-icon').textContent    = d.symbol.slice(0,3);
+        document.getElementById('ir-symbol').textContent  = d.symbol;
+        document.getElementById('ir-price').textContent   = fmtPrice(d.price);
+        document.getElementById('ir-updated').textContent = 'Updated ' + new Date(d.timestamp).toLocaleTimeString();
+        const ch24El = document.getElementById('ir-ch24');
+        ch24El.textContent = '24h ' + fmtChg(d.change24h);
+        ch24El.style.color = chgColor(d.change24h);
+        const ch7El = document.getElementById('ir-ch7d');
+        ch7El.textContent = '7d ' + fmtChg(d.change7d);
+        ch7El.style.color = chgColor(d.change7d);
+
+        const badge = document.getElementById('ir-verdict-badge');
+        badge.textContent = d.verdict;
+        badge.style.cssText = `background:${vs.bg};color:${vs.color};border:1.5px solid ${vs.border};box-shadow:${vs.glow};border-radius:14px;padding:8px 20px;font-size:13px;font-weight:900;letter-spacing:.05em`;
+
+        // Verdict card
+        document.getElementById('ir-conf-pct').textContent = d.confidence + '%';
+        document.getElementById('ir-conf-label').textContent = d.confidence >= 80 ? 'High confidence' : d.confidence >= 65 ? 'Good confidence' : 'Moderate';
+        const bar = document.getElementById('ir-conf-bar');
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = d.confidence + '%'; }, 80);
+        const barColor = d.confidence >= 80 ? 'var(--ok)' : d.confidence >= 65 ? 'var(--pri)' : 'var(--warn)';
+        bar.style.background = barColor;
+
+        document.getElementById('ir-bias').textContent    = d.bias;
+        document.getElementById('ir-upside').textContent  = '+' + d.upside + '%';
+        document.getElementById('ir-downside').textContent = '-' + d.downside + '%';
+
+        // Bullish dots
+        document.getElementById('ir-bull-score').textContent = d.bullishScore;
+        const dots = document.getElementById('ir-bull-dots');
+        dots.innerHTML = '';
+        for (let i = 0; i < 10; i++) {
+            const dot = document.createElement('div');
+            dot.style.cssText = `width:18px;height:6px;border-radius:100px;transition:background .3s ${i*40}ms;background:${i < d.bullishScore ? vs.color : 'var(--inp)'}`;
+            dots.appendChild(dot);
+        }
+
+        // AI Summary
+        document.getElementById('ir-summary').textContent = d.summary;
+
+        // Position advice
+        if (d.position && d.positionAdvice) {
+            document.getElementById('ir-pos-advice-wrap').style.display = 'block';
+            const pnlPct = d.position.pnlPct;
+            document.getElementById('ir-pos-stats').textContent =
+                `Entry ${fmtPrice(d.position.entryPrice)} · Qty ${d.position.qty} · P&L ${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`;
+            document.getElementById('ir-pos-advice').textContent = d.positionAdvice;
+        } else {
+            document.getElementById('ir-pos-advice-wrap').style.display = 'none';
+        }
+
+        // Fear & Greed
+        const fgv = d.fearGreed?.value || 50;
+        const fgFill = document.getElementById('ir-fg-fill');
+        fgFill.style.width = fgv + '%';
+        fgFill.style.background = fgv >= 75 ? 'var(--err)' : fgv >= 55 ? 'var(--warn)' : fgv >= 45 ? 'var(--ok)' : '#60a5fa';
+        document.getElementById('ir-fg-val').textContent   = fgv;
+        document.getElementById('ir-fg-label').textContent = d.fearGreed?.label || '--';
+
+        // Timeframe grid
+        const tfGrid = document.getElementById('ir-tf-grid');
+        const tfs = [
+            { label: '15m', key: 'tf15m', data: d.timeframes?.tf15m },
+            { label: '1h',  key: 'tf1h',  data: d.timeframes?.tf1h  },
+            { label: '4h',  key: 'tf4h',  data: d.timeframes?.tf4h  },
+            { label: '1D',  key: 'tf1d',  data: d.timeframes?.tf1d  },
+        ];
+        tfGrid.innerHTML = tfs.map(tf => {
+            const td = tf.data || {};
+            const isBull = tf.label === '1D' ? td.trend === 'up' : td.supertrend;
+            const flipBadge = td.flipped ? `<span class="text-xs font-black px-2 py-0.5 rounded-full ml-1" style="background:rgba(252,211,77,.2);color:var(--warn)">⚡FLIP</span>` : '';
+            const stLabel = tf.label === '1D'
+                ? `<span style="color:${td.trend==='up'?'var(--ok)':td.trend==='down'?'var(--err)':'var(--warn)'}">Trend ${td.trend||'--'}</span>`
+                : `<span style="color:${isBull?'var(--ok)':'var(--err)'}">ST ${isBull?'Bullish':'Bearish'}</span>`;
+            const macdBadge = td.macd != null
+                ? `<div class="text-xs mt-1" style="color:${td.macd?'var(--ok)':'var(--err)'}">MACD ${td.macd?'▲ Bull':'▼ Bear'}</div>` : '';
+            const volBadge  = td.volume != null
+                ? `<div class="text-xs mt-1" style="color:var(--t4)">Vol ${td.volume}x</div>` : '';
+            const rsiColor  = td.rsi >= 70 ? 'var(--err)' : td.rsi <= 30 ? 'var(--ok)' : 'var(--t2)';
+            return `<div class="tf-card ${isBull ? 'bull' : 'bear'}">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-black tracking-widest" style="color:var(--t4)">${tf.label}</span>
+                    <span class="text-lg">${isBull ? '🟢' : '🔴'}</span>
+                </div>
+                <div class="text-sm font-bold mb-1">${stLabel}${flipBadge}</div>
+                <div class="text-xl font-black mono mb-1" style="color:${rsiColor}">RSI ${td.rsi||'--'}</div>
+                ${macdBadge}${volBadge}
+            </div>`;
+        }).join('');
+
+        // Key Levels grid
+        const lv = d.levels || {};
+        const levelsData = [
+            { label:'Support',    val: lv.support,    color:'var(--ok)' },
+            { label:'EMA 9',      val: lv.ema9,       color:'var(--acc)' },
+            { label:'EMA 21',     val: lv.ema21,       color:'var(--pri)' },
+            { label:'EMA 50',     val: lv.ema50,       color:'var(--warn)' },
+            { label:'BB Lower',   val: lv.bbLower,     color:'var(--t3)' },
+            { label:'Resistance', val: lv.resistance,  color:'var(--err)' },
+        ];
+        document.getElementById('ir-levels-grid').innerHTML = levelsData.map(l =>
+            `<div class="level-chip">
+                <div class="text-xs mb-1" style="color:var(--t4)">${l.label}</div>
+                <div class="text-sm font-black mono" style="color:${l.color}">${fmtLevel(l.val)}</div>
+            </div>`
+        ).join('');
+
+        // Indicators
+        const tf4 = d.timeframes?.tf4h || {};
+        const indsData = [
+            { label:'RSI (4h)',    val: tf4.rsi,   sub: tf4.rsi >= 70 ? 'Overbought' : tf4.rsi <= 30 ? 'Oversold' : 'Neutral',  ok: tf4.rsi > 50 && tf4.rsi < 70 },
+            { label:'StochRSI',    val: tf4.stochRsi+'', sub: tf4.stochRsi <= 20 ? 'Oversold' : tf4.stochRsi >= 80 ? 'Overbought' : 'Normal', ok: tf4.stochRsi < 50 },
+            { label:'Volume',      val: (tf4.volume||'--')+'x', sub: tf4.volume >= 2 ? 'High surge' : tf4.volume >= 1.3 ? 'Above avg' : 'Low', ok: tf4.volume >= 1.3 },
+            { label:'ATR (4h)',    val: (lv.atrPercent||'--')+'%', sub: 'Daily range', ok: true },
+        ];
+        document.getElementById('ir-indicators-grid').innerHTML = indsData.map(ind =>
+            `<div class="ind-chip">
+                <div class="text-xs mb-2" style="color:var(--t4)">${ind.label}</div>
+                <div class="text-lg font-black mono mb-0.5" style="color:${ind.ok ? 'var(--ok)' : 'var(--t2)'}">${ind.val}</div>
+                <div class="text-xs" style="color:var(--t4)">${ind.sub}</div>
+            </div>`
+        ).join('');
+
+        // ── History & Potential card ─────────────────────────────────────
+        const hist = d.historical;
+        const histCard = document.getElementById('ir-history-card');
+        if (hist && histCard) {
+            histCard.style.display = 'block';
+
+            // Rank
+            const rankEl = document.getElementById('ir-cg-rank');
+            if (rankEl) rankEl.textContent = hist.rank ? `Rank #${hist.rank}` : '';
+
+            // ATH
+            document.getElementById('ir-ath-price').textContent = fmtPrice(hist.ath);
+            document.getElementById('ir-ath-date').textContent  = hist.athDate ? 'on ' + hist.athDate : '';
+            document.getElementById('ir-to-ath').textContent    = hist.toAthPct > 0 ? `+${hist.toAthPct}% needed to reach ATH` : 'At or above ATH!';
+
+            // ATL
+            document.getElementById('ir-atl-price').textContent = fmtPrice(hist.atl);
+            document.getElementById('ir-atl-date').textContent  = hist.atlDate ? 'on ' + hist.atlDate : '';
+            document.getElementById('ir-from-ath').textContent  = `${hist.fromAthPct.toFixed(1)}% down from ATH`;
+
+            // Fibonacci targets
+            const fibs = [
+                { label: '23.6% Fib', val: hist.fibTargets?.fib236, pct: hist.toAthPct * 0.236 },
+                { label: '38.2% Fib', val: hist.fibTargets?.fib382, pct: hist.toAthPct * 0.382 },
+                { label: '61.8% Fib', val: hist.fibTargets?.fib618, pct: hist.toAthPct * 0.618 },
+                { label: '100% — ATH', val: hist.fibTargets?.ath,   pct: hist.toAthPct, isAth: true },
+            ];
+            const fibColors = ['var(--t2)', 'var(--warn)', 'var(--pri)', 'var(--ok)'];
+            document.getElementById('ir-fib-grid').innerHTML = fibs.map((f, i) =>
+                `<div class="rounded-xl p-3 text-center" style="background:var(--inp);border:1px solid var(--brd)">
+                    <div class="text-xs mb-1" style="color:var(--t4)">${f.label}</div>
+                    <div class="text-sm font-black mono" style="color:${fibColors[i]}">${fmtPrice(f.val)}</div>
+                    <div class="text-xs mt-0.5 font-semibold" style="color:${fibColors[i]}">+${f.pct.toFixed(1)}%</div>
+                </div>`
+            ).join('');
+
+            // Launch info
+            const liEl = document.getElementById('ir-launch-info');
+            if (liEl && hist.launchDate) liEl.textContent = `Launched ${hist.launchDate}`;
+
+            // Year chips
+            const yearly = hist.yearlyPrices || [];
+            const currentYear = new Date().getFullYear().toString();
+            const chipsEl = document.getElementById('ir-yearly-chips');
+            if (chipsEl && yearly.length) {
+                // Calculate year-over-year % changes
+                chipsEl.innerHTML = yearly.map((y, i) => {
+                    const prev  = i > 0 ? yearly[i-1].price : y.price;
+                    const chgPct = i > 0 && prev > 0 ? ((y.price - prev) / prev) * 100 : null;
+                    const isCur  = y.year === currentYear;
+                    const chgStr = chgPct !== null ? (chgPct >= 0 ? `+${chgPct.toFixed(0)}%` : `${chgPct.toFixed(0)}%`) : '';
+                    const chgCol = chgPct === null ? 'var(--t4)' : chgPct >= 0 ? 'var(--ok)' : 'var(--err)';
+                    return `<div class="rounded-xl px-3 py-2 text-center shrink-0" style="background:${isCur?'var(--acc-d)':'var(--inp)'};border:1px solid ${isCur?'var(--brd-s)':'var(--brd)'}">
+                        <div class="text-xs font-bold" style="color:${isCur?'var(--acc)':'var(--t4)'}">${y.year}${isCur?' ·now':''}</div>
+                        <div class="text-sm font-black mono" style="color:${isCur?'var(--acc)':'var(--t2)'}">${fmtPrice(y.price)}</div>
+                        ${chgStr ? `<div class="text-xs font-semibold" style="color:${chgCol}">${chgStr}</div>` : ''}
+                    </div>`;
+                }).join('');
+            }
+
+            // All-time return
+            const atrEl = document.getElementById('ir-alltime-return');
+            if (atrEl && hist.allTimeReturn !== null) {
+                const positive = hist.allTimeReturn >= 0;
+                atrEl.style.color = positive ? 'var(--ok)' : 'var(--err)';
+                atrEl.textContent = `All-time return since launch: ${positive?'+':''}${hist.allTimeReturn.toLocaleString()}%`
+                    + (hist.launchPrice ? ` (from $${hist.launchPrice})` : '');
+            }
+        } else if (histCard) {
+            histCard.style.display = 'none';
+        }
+
+        lucide.createIcons();
     }
 
     </script>
