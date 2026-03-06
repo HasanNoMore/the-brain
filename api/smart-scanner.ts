@@ -1421,15 +1421,21 @@ async function checkAndClosePositions(
           const coinBal = balRes.result?.list?.[0]?.coin?.find((c: any) => c.coin === pos.symbol);
           const actualQty = parseFloat(coinBal?.availableToWithdraw || '0');
           if (actualQty <= 0) {
-            // Ghost position — coin not in wallet, purge from state
+            // Ghost position — coin not in wallet, calculate real P&L from market price
+            const pnl = (currentPrice - pos.entryPrice) * pos.qty;
+            const pnlPct = ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100;
             pos.status = 'closed_manual';
             pos.closePrice = currentPrice;
             pos.closeTime = new Date().toISOString();
-            pos.pnl = 0; pos.pnlPercent = 0;
+            pos.pnl = Math.round(pnl * 100) / 100;
+            pos.pnlPercent = Math.round(pnlPct * 100) / 100;
             state.positions = state.positions.filter(p => p.id !== pos.id);
             state.history.push(pos);
+            state.totalPnl = Math.round((state.totalPnl + pnl) * 100) / 100;
+            state.totalTrades++;
+            if (pnl >= 0) state.winCount++; else state.lossCount++;
             if (tgToken && tgChat) await sendTelegramAlert(tgToken, tgChat,
-              `⚠️ GHOST POSITION PURGED | ${pos.symbol}\nCoin not in wallet — auto-removed from state`);
+              `⚠️ GHOST POSITION PURGED | ${pos.symbol}\nCoin not in wallet — P&L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%)`);
             continue;
           }
           sellQty = Math.min(pos.qty, actualQty);
@@ -1760,12 +1766,19 @@ async function emergencyCloseAll(
         const coinBal = balRes.result?.list?.[0]?.coin?.find((c: any) => c.coin === pos.symbol);
         const actualQty = parseFloat(coinBal?.availableToWithdraw || '0');
         if (actualQty <= 0) {
-          errors.push(`${pos.symbol}: ghost position — coin not in wallet, purged`);
+          // Ghost position — calculate real P&L from market price
+          const pnl = (currentPrice - pos.entryPrice) * pos.qty;
+          const pnlPct = ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100;
+          errors.push(`${pos.symbol}: ghost — P&L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`);
           pos.status = 'closed_emergency';
           pos.closePrice = currentPrice;
           pos.closeTime = new Date().toISOString();
-          pos.pnl = 0; pos.pnlPercent = 0;
+          pos.pnl = Math.round(pnl * 100) / 100;
+          pos.pnlPercent = Math.round(pnlPct * 100) / 100;
           state.history.push(pos);
+          state.totalPnl = Math.round((state.totalPnl + pnl) * 100) / 100;
+          state.totalTrades++;
+          if (pnl >= 0) state.winCount++; else state.lossCount++;
           continue;
         }
         emergencySellQty = Math.min(pos.qty, actualQty);
@@ -2324,21 +2337,125 @@ export default async function handler(req: any, res: any) {
     // Force-clears ghost positions from state without placing sell orders (use when coins aren't in wallet)
     if (action === 'purgePositions' && req.method === 'POST') {
       const state = await loadState();
+      const client = getBybitClient();
       const open = state.positions.filter(p => p.status === 'open');
       const now = new Date().toISOString();
       for (const pos of open) {
+        // Fetch current market price for accurate P&L instead of faking $0
+        let currentPrice = pos.entryPrice;
+        if (client) {
+          try {
+            const tickerRes = await client.getTickers({ category: 'spot', symbol: `${pos.symbol}USDT` });
+            if (tickerRes.retCode === 0 && tickerRes.result?.list?.[0])
+              currentPrice = parseFloat((tickerRes.result.list[0] as any).lastPrice || '0') || pos.entryPrice;
+          } catch {}
+        }
+        const pnl = (currentPrice - pos.entryPrice) * pos.qty;
+        const pnlPercent = ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100;
         pos.status = 'closed_manual' as any;
-        pos.closePrice = pos.entryPrice;
+        pos.closePrice = currentPrice;
         pos.closeTime = now;
-        pos.pnl = 0;
-        pos.pnlPercent = 0;
+        pos.pnl = Math.round(pnl * 100) / 100;
+        pos.pnlPercent = Math.round(pnlPercent * 100) / 100;
         state.history.push(pos);
+        state.totalPnl = Math.round((state.totalPnl + pnl) * 100) / 100;
+        state.totalTrades++;
+        if (pnl >= 0) state.winCount++; else state.lossCount++;
       }
       state.positions = state.positions.filter(p => p.status === 'open');
       state.dcaStacks = (state.dcaStacks || []).map(s => ({ ...s, status: 'closed' as any }));
       state.config.enabled = false;
       await saveState(state);
       return res.status(200).json({ success: true, purged: open.length, message: `Cleared ${open.length} ghost positions. Bot disabled.` });
+    }
+
+    // Re-sync: scan wallet for coins that are in history (closed_manual with pnl=0) but still held.
+    // Re-injects them as active positions with correct SL/TP from current config.
+    if (action === 'resyncPositions' && req.method === 'POST') {
+      const state = await loadState();
+      const client = getBybitClient();
+      if (!client) return res.status(500).json({ error: 'Bybit not configured' });
+      const config = state.config;
+
+      // Get wallet balances
+      const balRes = await client.getWalletBalance({ accountType: 'UNIFIED' });
+      const walletCoins = balRes.result?.list?.[0]?.coin || [];
+      const heldCoins: Record<string, { qty: number; usdValue: number }> = {};
+      for (const c of walletCoins as any[]) {
+        const qty = parseFloat(c.walletBalance || '0');
+        const usd = parseFloat(c.usdValue || '0');
+        if (usd > 1 && c.coin !== 'USDT') heldCoins[c.coin] = { qty, usdValue: usd };
+      }
+
+      // Find closed_manual trades with pnl=0 whose coin is still in wallet
+      const alreadyTracked = new Set(state.positions.filter(p => p.status === 'open').map(p => p.symbol));
+      let resynced = 0;
+      const results: string[] = [];
+
+      for (const hist of state.history) {
+        if (hist.status !== 'closed_manual' || hist.pnl !== 0) continue;
+        const sym = hist.symbol;
+        if (!heldCoins[sym] || alreadyTracked.has(sym)) continue;
+
+        // Get current price
+        let currentPrice = hist.entryPrice;
+        try {
+          const tickerRes = await client.getTickers({ category: 'spot', symbol: `${sym}USDT` });
+          if (tickerRes.retCode === 0 && tickerRes.result?.list?.[0])
+            currentPrice = parseFloat((tickerRes.result.list[0] as any).lastPrice || '0') || hist.entryPrice;
+        } catch {}
+
+        // Re-create position with correct SL/TP from current config
+        const entryPrice = hist.entryPrice;
+        const qty = heldCoins[sym].qty;
+        const stopLoss = roundPrice(entryPrice * (1 - config.stopLossPercent / 100));
+        const takeProfit = roundPrice(entryPrice * (1 + config.takeProfitPercent / 100));
+        const tp1 = config.tp1Percent > 0 ? roundPrice(entryPrice * (1 + config.tp1Percent / 100)) : undefined;
+
+        const newPos: Position = {
+          id: `resync_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          symbol: sym,
+          entryPrice,
+          qty,
+          usdValue: Math.round(currentPrice * qty * 100) / 100,
+          entryTime: hist.entryTime,
+          orderId: hist.orderId || '',
+          stopLoss,
+          takeProfit,
+          status: 'open',
+          peakPrice: Math.max(currentPrice, hist.peakPrice || currentPrice),
+          tp1,
+          tp1Hit: false,
+          signal: hist.signal,
+          strategy: hist.strategy,
+        };
+
+        state.positions.push(newPos);
+        alreadyTracked.add(sym);
+        resynced++;
+        results.push(`${sym}: entry $${entryPrice} | SL $${stopLoss} (-${config.stopLossPercent}%) | TP $${takeProfit} (+${config.takeProfitPercent}%)`);
+
+        // Remove the bad history entry
+        const idx = state.history.indexOf(hist);
+        if (idx > -1) state.history.splice(idx, 1);
+      }
+
+      // Place server-side SL orders on Bybit for each re-synced position
+      for (const pos of state.positions.filter(p => p.status === 'open' && p.id.startsWith('resync_'))) {
+        try {
+          const slResult = await client.submitOrder({
+            category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell',
+            orderType: 'Market', qty: String(pos.qty),
+            triggerPrice: String(pos.stopLoss),
+            triggerDirection: 2,
+            orderFilter: 'tpslOrder',
+          });
+          if (slResult.retCode === 0) pos.slOrderId = slResult.result?.orderId;
+        } catch {}
+      }
+
+      await saveState(state);
+      return res.status(200).json({ success: true, resynced, positions: results });
     }
 
     if (action === 'cleanup' && req.method === 'POST') {
