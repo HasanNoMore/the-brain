@@ -1345,10 +1345,12 @@ async function checkAndClosePositions(
 
       // Trailing Stop: SL trails X% below peak price — ONLY after profit exceeds profitLockPercent
       // This prevents tiny peaks from moving SL above entry and causing premature exits
+      // Cap: SL can never exceed TP (if it does, TP should fire first)
       if (config.trailingStopPercent > 0 && pos.peakPrice && pnlPercent >= config.profitLockPercent) {
         const trailSL = pos.peakPrice * (1 - config.trailingStopPercent / 100);
-        if (trailSL > pos.stopLoss) {
-          pos.stopLoss = roundPrice(trailSL);
+        const cappedSL = Math.min(trailSL, pos.takeProfit * 0.995); // keep SL slightly below TP
+        if (cappedSL > pos.stopLoss) {
+          pos.stopLoss = roundPrice(cappedSL);
         }
       }
 
@@ -2484,9 +2486,14 @@ export default async function handler(req: any, res: any) {
         // Reset peakPrice to current entry to prevent trailing stop from immediately re-raising SL
         pos.peakPrice = pos.entryPrice;
 
-        // Cancel old SL order and place new one
-        if (client && pos.slOrderId) {
-          try { await client.cancelOrder({ category: 'spot', symbol: `${pos.symbol}USDT`, orderId: pos.slOrderId }); } catch {}
+        // Cancel ALL open conditional orders for this symbol before placing new SL
+        if (client) {
+          try {
+            const openOrders = await client.getActiveOrders({ category: 'spot', symbol: `${pos.symbol}USDT`, orderFilter: 'tpslOrder' });
+            for (const ord of (openOrders.result?.list || []) as any[]) {
+              try { await client.cancelOrder({ category: 'spot', symbol: `${pos.symbol}USDT`, orderId: ord.orderId }); } catch {}
+            }
+          } catch {}
         }
         if (client) {
           try {
