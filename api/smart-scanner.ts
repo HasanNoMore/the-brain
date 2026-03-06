@@ -1415,13 +1415,15 @@ async function checkAndClosePositions(
         }
 
         // Bug #2 fix: check actual wallet balance before selling — pos.qty can drift from real balance
+        // Use walletBalance (total including locked in orders) NOT availableToWithdraw (which excludes coins locked in SL orders)
         let sellQty = pos.qty;
         try {
           const balRes = await client.getWalletBalance({ accountType: 'UNIFIED', coin: pos.symbol });
           const coinBal = balRes.result?.list?.[0]?.coin?.find((c: any) => c.coin === pos.symbol);
-          const actualQty = parseFloat(coinBal?.availableToWithdraw || '0');
-          if (actualQty <= 0) {
-            // Ghost position — coin not in wallet, calculate real P&L from market price
+          const totalQty = parseFloat(coinBal?.walletBalance || '0');
+          const availableQty = parseFloat(coinBal?.availableToWithdraw || '0');
+          if (totalQty <= 0) {
+            // Ghost position — coin truly not in wallet at all, calculate real P&L
             const pnl = (currentPrice - pos.entryPrice) * pos.qty;
             const pnlPct = ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100;
             pos.status = 'closed_manual';
@@ -1438,7 +1440,11 @@ async function checkAndClosePositions(
               `⚠️ GHOST POSITION PURGED | ${pos.symbol}\nCoin not in wallet — P&L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%)`);
             continue;
           }
-          sellQty = Math.min(pos.qty, actualQty);
+          // Cancel server-side SL order first to free locked coins, then use available balance
+          if (pos.slOrderId) {
+            try { await client.cancelOrder({ category: 'spot', symbol: `${pos.symbol}USDT`, orderId: pos.slOrderId }); } catch {}
+          }
+          sellQty = Math.min(pos.qty, totalQty);
         } catch {}
 
         const closeResult = await client.submitOrder({
@@ -1759,13 +1765,13 @@ async function emergencyCloseAll(
         } catch {}
       }
 
-      // Bug #2 fix: check actual wallet balance before selling
+      // Bug #2 fix: check actual wallet balance before selling (use walletBalance not availableToWithdraw)
       let emergencySellQty = pos.qty;
       try {
         const balRes = await client.getWalletBalance({ accountType: 'UNIFIED', coin: pos.symbol });
         const coinBal = balRes.result?.list?.[0]?.coin?.find((c: any) => c.coin === pos.symbol);
-        const actualQty = parseFloat(coinBal?.availableToWithdraw || '0');
-        if (actualQty <= 0) {
+        const totalQty = parseFloat(coinBal?.walletBalance || '0');
+        if (totalQty <= 0) {
           // Ghost position — calculate real P&L from market price
           const pnl = (currentPrice - pos.entryPrice) * pos.qty;
           const pnlPct = ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100;
@@ -1781,7 +1787,7 @@ async function emergencyCloseAll(
           if (pnl >= 0) state.winCount++; else state.lossCount++;
           continue;
         }
-        emergencySellQty = Math.min(pos.qty, actualQty);
+        emergencySellQty = Math.min(pos.qty, totalQty);
       } catch {}
 
       const sellResult = await client.submitOrder({
@@ -2392,7 +2398,10 @@ export default async function handler(req: any, res: any) {
       let resynced = 0;
       const results: string[] = [];
 
-      for (const hist of state.history) {
+      // Collect entries to remove after loop (avoid splice-during-iteration bug)
+      const toRemove: number[] = [];
+      for (let i = 0; i < state.history.length; i++) {
+        const hist = state.history[i];
         if (hist.status !== 'closed_manual' || hist.pnl !== 0) continue;
         const sym = hist.symbol;
         if (!heldCoins[sym] || alreadyTracked.has(sym)) continue;
@@ -2434,10 +2443,11 @@ export default async function handler(req: any, res: any) {
         alreadyTracked.add(sym);
         resynced++;
         results.push(`${sym}: entry $${entryPrice} | SL $${stopLoss} (-${config.stopLossPercent}%) | TP $${takeProfit} (+${config.takeProfitPercent}%)`);
-
-        // Remove the bad history entry
-        const idx = state.history.indexOf(hist);
-        if (idx > -1) state.history.splice(idx, 1);
+        toRemove.push(i);
+      }
+      // Remove history entries in reverse order to preserve indices
+      for (let i = toRemove.length - 1; i >= 0; i--) {
+        state.history.splice(toRemove[i], 1);
       }
 
       // Place server-side SL orders on Bybit for each re-synced position
