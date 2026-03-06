@@ -803,6 +803,15 @@ input:focus, select:focus, textarea:focus {
 #ambient-blob-2 {
     background: radial-gradient(circle, rgba(148,129,255,0.03) 0%, transparent 65%) !important;
 }
+/* ===== BENTO ROW RESPONSIVE ===== */
+@media (max-width: 900px) {
+    .bento-row { grid-template-columns: 1fr 1fr !important; }
+    .bento-row > div:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+    .bento-row { grid-template-columns: 1fr !important; }
+    .bento-row > div:first-child { grid-column: auto; }
+}
     </style>
 </head>
 <body>
@@ -1040,24 +1049,58 @@ input:focus, select:focus, textarea:focus {
 
         <!-- PORTFOLIO SECTION -->
         <div id="section-portfolio" class="section-page active">
-            <div class="mb-6 fade-in">
-                <p style="font-size:13px;font-weight:600;text-transform:none" class="section-label mb-3">Portfolio Value</p>
-                <h2 class="portfolio-value equity" id="total-equity" style="font-size:48px;font-weight:800;font-family:'Outfit',sans-serif">$0.00</h2>
-                <p class="text-sm mt-2 font-medium" style="color:var(--t4)">Live prices · Auto-refresh 30s</p>
+
+            <!-- ROW 1: Welcome + Portfolio + Fear & Greed -->
+            <div style="display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:14px;margin-bottom:14px" class="fade-in bento-row">
+
+                <!-- Welcome Card -->
+                <div class="card" style="padding:28px">
+                    <p style="font-size:13px;color:var(--t3);margin-bottom:6px">Welcome back,</p>
+                    <h2 style="font-size:38px;font-weight:800;font-family:var(--font-heading);letter-spacing:-0.03em;line-height:1.05;margin-bottom:8px">The Brain</h2>
+                    <span style="display:inline-block;padding:4px 14px;border-radius:100px;background:var(--pri);color:#111;font-size:12px;font-weight:700">Premium Bot</span>
+                    <p style="font-size:12px;color:var(--t3);margin-top:20px;margin-bottom:8px">Quick Actions</p>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="switchSection('heatmap');switchHeatmapTab('scanner')" class="btn-primary flex items-center gap-2 px-5 py-2.5 text-sm"><i data-lucide="scan-line" class="w-4 h-4"></i> Run Scan</button>
+                        <button onclick="switchSection('strategy');updateStrategyParams()" class="btn-ghost flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium"><i data-lucide="flask-conical" class="w-4 h-4"></i> Strategy Lab</button>
+                    </div>
+                </div>
+
+                <!-- Portfolio Value Card - LIME -->
+                <div class="card" style="padding:24px;background:var(--pri);border-color:var(--pri);position:relative">
+                    <div style="position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;cursor:pointer">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--pri)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                    </div>
+                    <p style="font-size:11px;font-weight:700;color:rgba(0,0,0,0.4);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px">Portfolio Value</p>
+                    <h2 class="portfolio-value equity" id="total-equity" style="font-size:40px;font-weight:800;font-family:var(--font-heading);color:#111;letter-spacing:-0.03em">$0.00</h2>
+                    <p class="text-sm mt-2 font-medium" style="color:rgba(0,0,0,0.45)">Live prices · Auto-refresh 30s</p>
+                </div>
+
+                <!-- Fear & Greed Card -->
+                <div class="card" id="fng-card" style="padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;position:relative">
+                    <div id="fng-glow" class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse at 50% 120%,rgba(234,179,8,.07) 0%,transparent 65%);transition:background 1s"></div>
+                    <div style="font-size:11px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;position:relative;z-index:1">Fear & Greed</div>
+                    <div class="relative z-10" style="width:220px;height:130px">
+                        <canvas id="fng-canvas" width="440" height="260" style="width:220px;height:130px;display:block"></canvas>
+                        <div class="absolute left-0 right-0 flex flex-col items-center pointer-events-none" style="bottom:18px">
+                            <div id="fng-value" class="font-black" style="font-size:42px;line-height:1;font-family:var(--font-heading)">—</div>
+                            <div id="fng-label" class="text-xs font-bold mt-1 tracking-widest uppercase" style="letter-spacing:.1em">Loading…</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-2 w-full relative z-10">
+                        <div class="rounded-xl px-3 py-2" style="background:var(--inp);border:1px solid var(--brd)">
+                            <div class="text-[9px] font-semibold mb-0.5" style="color:var(--t4)">BTC DOMINANCE</div>
+                            <div id="fng-btc-dom" class="text-sm font-black mono" style="color:var(--pri)">—%</div>
+                        </div>
+                        <div class="rounded-xl px-3 py-2" style="background:var(--inp);border:1px solid var(--brd)">
+                            <div class="text-[9px] font-semibold mb-0.5" style="color:var(--t4)">MARKET CAP</div>
+                            <div id="fng-mktcap" class="text-sm font-black mono" style="color:var(--acc)">—</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="flex gap-2 mb-6 flex-wrap quick-actions fade-in-1">
-                <a href="https://www.tradingview.com/chart/" target="_blank" rel="noopener" class="btn-ghost flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium" style="text-decoration:none">
-                    <svg width="14" height="14" viewBox="0 0 36 28" fill="currentColor"><path d="M14 22H7V11h7v11zm11 0h-7V6h7v16zm11 0h-7V0h7v22zM3 28H0V0h3v28z"/></svg> TradingView
-                </a>
-                <a href="https://www.bybit.com/trade/spot/BTC/USDT" target="_blank" rel="noopener" class="btn-ghost flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium" style="text-decoration:none">
-                    <i data-lucide="arrow-left-right" class="w-4 h-4"></i> Bybit
-                </a>
-                <button onclick="switchSection('heatmap');switchHeatmapTab('scanner')" class="btn-primary flex items-center gap-2 px-5 py-2.5 text-sm"><i data-lucide="scan-line" class="w-4 h-4"></i> Scan</button>
-                <button onclick="switchSection('strategy');updateStrategyParams()" class="btn-ghost flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium"><i data-lucide="flask-conical" class="w-4 h-4"></i> Strategy</button>
-                <button onclick="toggleModal('calc-modal',true)" class="btn-ghost flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium"><i data-lucide="calculator" class="w-4 h-4"></i> Size Calc</button>
-            </div>
+
             <!-- TOP SIGNALS ALERT BANNER -->
-            <div id="signals-banner" class="mb-6 fade-in-2">
+            <div id="signals-banner" class="mb-6 fade-in-1">
                 <div class="flex justify-between items-center mb-3">
                     <div class="flex items-center gap-2.5">
                         <div class="w-7 h-7 rounded-xl flex items-center justify-center" style="background:var(--pri-d);border:1px solid var(--brd-a)">
@@ -1088,42 +1131,8 @@ input:focus, select:focus, textarea:focus {
                 </div>
             </div>
 
-            <!-- FEAR & GREED + BOT STATS + AI BRIEFING ROW -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 fade-in-3">
-                <!-- Fear & Greed Index — WOW gauge -->
-                <div class="card p-5 overflow-hidden relative" id="fng-card">
-                    <!-- Dynamic background glow -->
-                    <div id="fng-glow" class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse at 50% 120%,rgba(234,179,8,.07) 0%,transparent 65%);transition:background 1s"></div>
-
-                    <div class="flex items-center justify-between mb-1 relative z-10">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="gauge" class="w-4 h-4" style="color:var(--warn)"></i>
-                            <span class="text-xs font-semibold" style="color:var(--t3)">Fear & Greed Index</span>
-                        </div>
-                        <div id="fng-change" class="text-[10px] font-semibold" style="color:var(--t4)"></div>
-                    </div>
-
-                    <!-- SVG Donut Arc Gauge — V4.1 Step 8 -->
-                    <div class="flex flex-col items-center relative z-10">
-                        <div id="fng-svg-arc" style="width:260px;height:130px;display:flex;align-items:center;justify-content:center"></div>
-                        <div style="text-align:center;margin-top:-4px">
-                            <div id="fng-value" class="font-black" style="font-size:44px;line-height:1;font-family:var(--font-heading)">—</div>
-                            <div id="fng-label" class="font-bold" style="font-size:12px;letter-spacing:.06em;margin-top:4px;text-transform:uppercase">Loading…</div>
-                        </div>
-                    </div>
-
-                    <!-- Extra market stats strip -->
-                    <div class="grid grid-cols-2 gap-2 mt-4 relative z-10">
-                        <div class="rounded-xl px-3 py-2" style="background:var(--inp);border:1px solid var(--brd)">
-                            <div class="text-[9px] font-semibold mb-0.5" style="color:var(--t4)">BTC DOMINANCE</div>
-                            <div id="fng-btc-dom" class="text-sm font-black mono" style="color:var(--pri)">—%</div>
-                        </div>
-                        <div class="rounded-xl px-3 py-2" style="background:var(--inp);border:1px solid var(--brd)">
-                            <div class="text-[9px] font-semibold mb-0.5" style="color:var(--t4)">MARKET CAP</div>
-                            <div id="fng-mktcap" class="text-sm font-black mono" style="color:var(--acc)">—</div>
-                        </div>
-                    </div>
-                </div>
+            <!-- BOT STATS + AI BRIEFING ROW -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 fade-in-2">
                 <!-- Bot Performance Stats -->
                 <div class="card card-glass p-4 stat-accent-pri" style="border:1px solid rgba(148,129,255,0.15)">
                     <div class="flex items-center justify-between mb-3">
