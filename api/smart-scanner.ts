@@ -1343,8 +1343,9 @@ async function checkAndClosePositions(
         }
       }
 
-      // Trailing Stop: SL trails X% below peak price
-      if (config.trailingStopPercent > 0 && pos.peakPrice) {
+      // Trailing Stop: SL trails X% below peak price — ONLY after profit exceeds profitLockPercent
+      // This prevents tiny peaks from moving SL above entry and causing premature exits
+      if (config.trailingStopPercent > 0 && pos.peakPrice && pnlPercent >= config.profitLockPercent) {
         const trailSL = pos.peakPrice * (1 - config.trailingStopPercent / 100);
         if (trailSL > pos.stopLoss) {
           pos.stopLoss = roundPrice(trailSL);
@@ -2402,7 +2403,7 @@ export default async function handler(req: any, res: any) {
       const toRemove: number[] = [];
       for (let i = 0; i < state.history.length; i++) {
         const hist = state.history[i];
-        if (hist.status !== 'closed_manual') continue;
+        if (hist.status !== 'closed_manual' && hist.status !== 'closed_sl') continue;
         const sym = hist.symbol;
         if (!heldCoins[sym] || alreadyTracked.has(sym)) continue;
 
@@ -2466,6 +2467,45 @@ export default async function handler(req: any, res: any) {
 
       await saveState(state);
       return res.status(200).json({ success: true, resynced, positions: results });
+    }
+
+    // Reset all open positions' SL/TP to current config values and cancel/replace server-side SL orders
+    if (action === 'resetLevels' && req.method === 'POST') {
+      const state = await loadState();
+      const client = getBybitClient();
+      const config = state.config;
+      const results: string[] = [];
+
+      for (const pos of state.positions.filter(p => p.status === 'open')) {
+        const oldSL = pos.stopLoss;
+        pos.stopLoss = roundPrice(pos.entryPrice * (1 - config.stopLossPercent / 100));
+        pos.takeProfit = roundPrice(pos.entryPrice * (1 + config.takeProfitPercent / 100));
+        pos.tp1 = config.tp1Percent > 0 ? roundPrice(pos.entryPrice * (1 + config.tp1Percent / 100)) : undefined;
+        // Reset peakPrice to current entry to prevent trailing stop from immediately re-raising SL
+        pos.peakPrice = pos.entryPrice;
+
+        // Cancel old SL order and place new one
+        if (client && pos.slOrderId) {
+          try { await client.cancelOrder({ category: 'spot', symbol: `${pos.symbol}USDT`, orderId: pos.slOrderId }); } catch {}
+        }
+        if (client) {
+          try {
+            const slResult = await client.submitOrder({
+              category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell',
+              orderType: 'Market', qty: String(pos.qty),
+              triggerPrice: String(pos.stopLoss),
+              triggerDirection: 2,
+              orderFilter: 'tpslOrder',
+            });
+            if (slResult.retCode === 0) pos.slOrderId = slResult.result?.orderId;
+          } catch {}
+        }
+
+        results.push(`${pos.symbol}: SL ${oldSL} → ${pos.stopLoss} (-${config.stopLossPercent}%) | TP ${pos.takeProfit} (+${config.takeProfitPercent}%)`);
+      }
+
+      await saveState(state);
+      return res.status(200).json({ success: true, reset: results.length, positions: results });
     }
 
     if (action === 'cleanup' && req.method === 'POST') {
