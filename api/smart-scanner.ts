@@ -2402,7 +2402,7 @@ export default async function handler(req: any, res: any) {
       const toRemove: number[] = [];
       for (let i = 0; i < state.history.length; i++) {
         const hist = state.history[i];
-        if (hist.status !== 'closed_manual' || hist.pnl !== 0) continue;
+        if (hist.status !== 'closed_manual') continue;
         const sym = hist.symbol;
         if (!heldCoins[sym] || alreadyTracked.has(sym)) continue;
 
