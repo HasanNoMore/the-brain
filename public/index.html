@@ -840,6 +840,18 @@ input:focus, select:focus, textarea:focus {
 [data-theme="light"] .heatmap-cell .sym { color: rgba(255,255,255,0.88) !important; }
 [data-theme="light"] .heatmap-cell .pct { color: rgba(255,255,255,0.80) !important; }
 [data-theme="light"] .heatmap-cell .price { color: rgba(255,255,255,0.60) !important; }
+[data-theme="light"] .stat-item { background: #1d1b25 !important; border-color: rgba(255,255,255,0.09) !important; color: #f2f2f6 !important; }
+[data-theme="light"] .news-card { background: #1d1b25 !important; border-color: rgba(255,255,255,0.09) !important; color: #f2f2f6 !important; }
+[data-theme="light"] .top-sig { background: #1d1b25 !important; border-color: rgba(255,255,255,0.09) !important; }
+[data-theme="light"] .coin-action-btn { background: #1d1b25 !important; color: #f2f2f6 !important; }
+[data-theme="light"] .gradient-text { background: linear-gradient(135deg, #daff7b, #9481ff) !important; -webkit-background-clip: text !important; background-clip: text !important; }
+[data-theme="light"] .brain-icon-bg { background: linear-gradient(135deg, #9481ff, #6b5ce7) !important; }
+[data-theme="light"] .btn-ghost:hover { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.16) !important; color: #f2f2f6 !important; }
+[data-theme="light"] input:focus, [data-theme="light"] select:focus, [data-theme="light"] textarea:focus {
+    border-color: var(--pri) !important; box-shadow: 0 0 0 3px rgba(218,255,123,0.1) !important; background: rgba(255,255,255,0.06) !important;
+}
+[data-theme="light"] .journal-tab.active { color: #111018 !important; }
+[data-theme="light"] .tab-btn.active { color: #111018 !important; }
 
 /* ===== BENTO ROW RESPONSIVE ===== */
 @media (max-width: 900px) {
@@ -1104,7 +1116,7 @@ input:focus, select:focus, textarea:focus {
                 </div>
 
                 <!-- Portfolio Value Card - LIME -->
-                <div class="card" style="padding:24px;background:var(--pri);border-color:var(--pri);position:relative;color:#111">
+                <div class="card" style="padding:24px;background:var(--pri);border-color:var(--pri);position:relative;color:#111;display:flex;flex-direction:column;justify-content:center">
                     <div style="position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;cursor:pointer">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--pri)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
                     </div>
@@ -1116,15 +1128,16 @@ input:focus, select:focus, textarea:focus {
                 <!-- Fear & Greed Card -->
                 <div class="card" id="fng-card" style="padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;position:relative">
                     <div id="fng-glow" class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse at 50% 120%,rgba(234,179,8,.07) 0%,transparent 65%);transition:background 1s"></div>
-                    <div style="font-size:11px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;position:relative;z-index:1">Fear & Greed</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;position:relative;z-index:1">Fear & Greed</div>
                     <div class="relative z-10" style="width:220px;height:130px">
-                        <canvas id="fng-canvas" width="440" height="260" style="width:220px;height:130px;display:block"></canvas>
-                        <div class="absolute left-0 right-0 flex flex-col items-center pointer-events-none" style="bottom:18px">
+                        <div id="fng-svg-arc" style="width:220px;height:110px;display:flex;align-items:center;justify-content:center"></div>
+                        <div class="absolute left-0 right-0 flex flex-col items-center pointer-events-none" style="bottom:14px">
                             <div id="fng-value" class="font-black" style="font-size:42px;line-height:1;font-family:var(--font-heading);color:var(--t1)">—</div>
                             <div id="fng-label" class="text-xs font-bold mt-1 tracking-widest uppercase" style="letter-spacing:.1em;color:var(--t2)">Loading…</div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mt-2 w-full relative z-10">
+                    <div id="fng-change" class="text-[10px] font-semibold relative z-10" style="margin-bottom:6px"></div>
+                    <div class="grid grid-cols-2 gap-2 w-full relative z-10">
                         <div class="rounded-xl px-3 py-2" style="background:var(--inp);border:1px solid var(--brd)">
                             <div class="text-[9px] font-semibold mb-0.5" style="color:var(--t4)">BTC DOMINANCE</div>
                             <div id="fng-btc-dom" class="text-sm font-black mono" style="color:var(--pri)">—%</div>
