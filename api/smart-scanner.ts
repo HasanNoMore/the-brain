@@ -1447,8 +1447,9 @@ async function checkAndClosePositions(
           const balRes = await client.getWalletBalance({ accountType: 'UNIFIED', coin: pos.symbol });
           const coinBal = balRes.result?.list?.[0]?.coin?.find((c: any) => c.coin === pos.symbol);
           const totalQty = parseFloat(coinBal?.walletBalance || '0');
+          const usdValue = parseFloat(coinBal?.usdValue || '0');
           const availableQty = parseFloat(coinBal?.availableToWithdraw || '0');
-          if (totalQty <= 0) {
+          if (totalQty <= 0 || usdValue < 1) {
             // Ghost position — coin truly not in wallet at all, calculate real P&L
             const pnl = (currentPrice - pos.entryPrice) * pos.qty;
             const pnlPct = ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100;
@@ -1799,8 +1800,9 @@ async function emergencyCloseAll(
         const balRes = await client.getWalletBalance({ accountType: 'UNIFIED', coin: pos.symbol });
         const coinBal = balRes.result?.list?.[0]?.coin?.find((c: any) => c.coin === pos.symbol);
         const totalQty = parseFloat(coinBal?.walletBalance || '0');
-        if (totalQty <= 0) {
-          // Ghost position — calculate real P&L from market price
+        const emUsdValue = parseFloat(coinBal?.usdValue || '0');
+        if (totalQty <= 0 || emUsdValue < 1) {
+          // Ghost position (or dust < $1) — calculate real P&L from market price
           const pnl = (currentPrice - pos.entryPrice) * pos.qty;
           const pnlPct = ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100;
           errors.push(`${pos.symbol}: ghost — P&L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`);
