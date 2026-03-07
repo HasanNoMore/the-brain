@@ -803,6 +803,44 @@ input:focus, select:focus, textarea:focus {
 #ambient-blob-2 {
     background: radial-gradient(circle, rgba(148,129,255,0.03) 0%, transparent 65%) !important;
 }
+/* ===== FORCE DARK TEXT COLORS (override light theme) ===== */
+/* The V4.1 override forces dark backgrounds, so light theme text must also stay light */
+[data-theme="light"] {
+    --t1: #f2f2f6 !important;
+    --t2: #c5c5d0 !important;
+    --t3: #8a8a98 !important;
+    --t4: #5a5a68 !important;
+    --bg: #141218 !important;
+    --bg2: #1d1b25 !important;
+    --card: #1d1b25 !important;
+    --card-h: #222030 !important;
+    --brd: rgba(255,255,255,0.07) !important;
+    --brd-h: rgba(255,255,255,0.14) !important;
+    --inp: rgba(255,255,255,0.05) !important;
+    --inp-f: rgba(255,255,255,0.09) !important;
+    --hov: rgba(255,255,255,0.05) !important;
+    --ov: rgba(0,0,0,0.84) !important;
+    --sb: rgba(255,255,255,0.1) !important;
+    --sb-h: rgba(255,255,255,0.18) !important;
+}
+[data-theme="light"] body { color: #f2f2f6 !important; background: #141218 !important; }
+[data-theme="light"] .card { background: #1d1b25 !important; border-color: rgba(255,255,255,0.09) !important; }
+[data-theme="light"] .card:hover { background: #222030 !important; border-color: rgba(255,255,255,0.14) !important; }
+[data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea {
+    background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.09) !important; color: #f2f2f6 !important;
+}
+[data-theme="light"] .header-bar, [data-theme="light"] header { background: rgba(20,18,24,0.92) !important; }
+[data-theme="light"] .btn-ghost { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.09) !important; color: #f2f2f6 !important; }
+[data-theme="light"] .nav-pill-container { background: #1d1b25 !important; border-color: rgba(255,255,255,0.09) !important; }
+[data-theme="light"] .nav-tab { color: var(--t3) !important; border-color: rgba(255,255,255,0.09) !important; }
+[data-theme="light"] .nav-tab.active { color: #111018 !important; }
+[data-theme="light"] .modal-panel { background: #1d1b25 !important; border-color: rgba(255,255,255,0.09) !important; }
+[data-theme="light"] .section-label { color: #f2f2f6 !important; }
+[data-theme="light"] .mobile-nav { background: rgba(20,18,24,0.95) !important; }
+[data-theme="light"] .heatmap-cell .sym { color: rgba(255,255,255,0.88) !important; }
+[data-theme="light"] .heatmap-cell .pct { color: rgba(255,255,255,0.80) !important; }
+[data-theme="light"] .heatmap-cell .price { color: rgba(255,255,255,0.60) !important; }
+
 /* ===== BENTO ROW RESPONSIVE ===== */
 @media (max-width: 900px) {
     .bento-row { grid-template-columns: 1fr 1fr !important; }
