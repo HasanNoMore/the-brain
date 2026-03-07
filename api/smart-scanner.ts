@@ -1717,7 +1717,7 @@ async function executeTrades(
           orderType: 'Market', qty: truncateQty(fillQty, slQtyDec),
           triggerPrice: String(stopLoss),
           triggerDirection: 2, // 2 = triggers when price falls AT or BELOW triggerPrice
-          orderFilter: 'tpslOrder',
+          orderFilter: 'StopOrder',
         });
         if (slResult.retCode === 0) {
           position.slOrderId = slResult.result?.orderId;
@@ -2491,7 +2491,7 @@ export default async function handler(req: any, res: any) {
             orderType: 'Market', qty: truncateQty(pos.qty, rsQtyDec),
             triggerPrice: String(pos.stopLoss),
             triggerDirection: 2,
-            orderFilter: 'tpslOrder',
+            orderFilter: 'StopOrder',
           });
           if (slResult.retCode === 0) pos.slOrderId = slResult.result?.orderId;
         } catch {}
@@ -2519,7 +2519,7 @@ export default async function handler(req: any, res: any) {
         // Cancel ALL open conditional orders for this symbol before placing new SL
         if (client) {
           try {
-            const openOrders = await client.getActiveOrders({ category: 'spot', symbol: `${pos.symbol}USDT`, orderFilter: 'tpslOrder' });
+            const openOrders = await client.getActiveOrders({ category: 'spot', symbol: `${pos.symbol}USDT`, orderFilter: 'StopOrder' });
             for (const ord of (openOrders.result?.list || []) as any[]) {
               try { await client.cancelOrder({ category: 'spot', symbol: `${pos.symbol}USDT`, orderId: ord.orderId }); } catch {}
             }
@@ -2534,7 +2534,7 @@ export default async function handler(req: any, res: any) {
               orderType: 'Market', qty: truncateQty(pos.qty, rlQtyDec),
               triggerPrice: String(pos.stopLoss),
               triggerDirection: 2,
-              orderFilter: 'tpslOrder',
+              orderFilter: 'StopOrder',
             });
             if (slResult.retCode === 0) {
               pos.slOrderId = slResult.result?.orderId;
