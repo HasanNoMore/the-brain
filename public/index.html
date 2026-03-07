@@ -826,6 +826,11 @@ input:focus, select:focus, textarea:focus {
 [data-theme="light"] body { color: #f2f2f6 !important; background: #141218 !important; }
 [data-theme="light"] .card { background: #1d1b25 !important; border-color: rgba(255,255,255,0.09) !important; }
 [data-theme="light"] .card:hover { background: #222030 !important; border-color: rgba(255,255,255,0.14) !important; }
+[data-theme="light"] .card.lime-card { background: var(--pri) !important; border-color: var(--pri) !important; color: #111 !important; }
+[data-theme="light"] .card.lime-card:hover { background: var(--pri-l) !important; }
+[data-theme="light"] .card.lime-card * { color: #111 !important; }
+[data-theme="light"] .card.lime-card .text-sm { color: rgba(0,0,0,0.45) !important; }
+[data-theme="light"] .card.lime-card p[style*="uppercase"] { color: rgba(0,0,0,0.4) !important; }
 [data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea {
     background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.09) !important; color: #f2f2f6 !important;
 }
@@ -852,6 +857,14 @@ input:focus, select:focus, textarea:focus {
 }
 [data-theme="light"] .journal-tab.active { color: #111018 !important; }
 [data-theme="light"] .tab-btn.active { color: #111018 !important; }
+
+/* ===== LIME CARD — force dark text in all themes ===== */
+.lime-card, .lime-card * { color: #111 !important; }
+.lime-card .text-sm { color: rgba(0,0,0,0.45) !important; }
+.lime-card p[style*="uppercase"] { color: rgba(0,0,0,0.4) !important; }
+.lime-card .portfolio-value, .lime-card .equity { color: #111 !important; }
+.lime-card svg { color: inherit; }
+.lime-card svg path, .lime-card svg line { stroke: var(--pri) !important; }
 
 /* ===== BENTO ROW RESPONSIVE ===== */
 @media (max-width: 900px) {
@@ -1116,13 +1129,13 @@ input:focus, select:focus, textarea:focus {
                 </div>
 
                 <!-- Portfolio Value Card - LIME -->
-                <div class="card" style="padding:24px;background:var(--pri);border-color:var(--pri);position:relative;color:#111;display:flex;flex-direction:column;justify-content:center">
+                <div class="card lime-card" style="padding:24px;background:var(--pri) !important;border-color:var(--pri) !important;position:relative;color:#111 !important;display:flex;flex-direction:column;justify-content:center">
                     <div style="position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;cursor:pointer">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--pri)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
                     </div>
-                    <p style="font-size:11px;font-weight:700;color:rgba(0,0,0,0.4);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px">Portfolio Value</p>
-                    <h2 class="portfolio-value equity" id="total-equity" style="font-size:40px;font-weight:800;font-family:var(--font-heading);color:#111;letter-spacing:-0.03em">$0.00</h2>
-                    <p class="text-sm mt-2 font-medium" style="color:rgba(0,0,0,0.45)">Live prices · Auto-refresh 30s</p>
+                    <p style="font-size:11px;font-weight:700;color:rgba(0,0,0,0.4) !important;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px">Portfolio Value</p>
+                    <h2 class="portfolio-value equity" id="total-equity" style="font-size:40px;font-weight:800;font-family:var(--font-heading);color:#111 !important;letter-spacing:-0.03em">$0.00</h2>
+                    <p class="text-sm mt-2 font-medium" style="color:rgba(0,0,0,0.45) !important">Live prices · Auto-refresh 30s</p>
                 </div>
 
                 <!-- Fear & Greed Card -->
