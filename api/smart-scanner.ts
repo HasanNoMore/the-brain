@@ -1256,6 +1256,27 @@ function roundPrice(p: number): number {
   return Math.round(p * 1000000) / 1000000; // $0.001234
 }
 
+// Round qty to match Bybit's basePrecision for each symbol
+// Fetches instrument info and truncates (floor) to valid step size
+const _qtyPrecisionCache: Record<string, number> = {};
+async function getQtyPrecision(client: RestClientV5, symbol: string): Promise<number> {
+  if (_qtyPrecisionCache[symbol] !== undefined) return _qtyPrecisionCache[symbol];
+  try {
+    const info = await client.getInstrumentsInfo({ category: 'spot', symbol: `${symbol}USDT` });
+    const bp = (info.result?.list?.[0] as any)?.lotSizeFilter?.basePrecision || '0.01';
+    const decimals = (bp.split('.')[1] || '').replace(/0+$/, '').length;
+    _qtyPrecisionCache[symbol] = decimals;
+    return decimals;
+  } catch {
+    _qtyPrecisionCache[symbol] = 2; // safe default
+    return 2;
+  }
+}
+function truncateQty(qty: number, decimals: number): string {
+  const factor = Math.pow(10, decimals);
+  return (Math.floor(qty * factor) / factor).toFixed(decimals);
+}
+
 async function sendSignalAlerts(signals: SmartSignal[], tgToken: string, tgChat: string, state: TradingState) {
   let alertsSent = 0;
   const MAX_ALERTS_PER_RUN = 2;            // max 2 alerts per cron cycle
@@ -1357,9 +1378,11 @@ async function checkAndClosePositions(
       // Partial TP1: sell tp1SizePercent% of position at TP1 price, let rest run to TP2
       if (config.tp1Percent > 0 && pos.tp1 && !pos.tp1Hit && currentPrice >= pos.tp1) {
         try {
-          const sellQty = Math.round(pos.qty * (config.tp1SizePercent / 100) * 1e8) / 1e8;
+          const rawSellQty = pos.qty * (config.tp1SizePercent / 100);
+          const qtyDec = await getQtyPrecision(client, pos.symbol);
+          const sellQty = parseFloat(truncateQty(rawSellQty, qtyDec));
           if (sellQty > 0) {
-            const tp1Result = await client.submitOrder({ category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(sellQty) });
+            const tp1Result = await client.submitOrder({ category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: truncateQty(rawSellQty, qtyDec) });
             if (tp1Result.retCode === 0) {
               const partialPnl = Math.round((currentPrice - pos.entryPrice) * sellQty * 100) / 100;
               pos.qty = Math.round((pos.qty - sellQty) * 1e8) / 1e8;
@@ -1450,8 +1473,9 @@ async function checkAndClosePositions(
           sellQty = Math.min(pos.qty, totalQty);
         } catch {}
 
+        const qtyDecClose = await getQtyPrecision(client, pos.symbol);
         const closeResult = await client.submitOrder({
-          category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(sellQty),
+          category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: truncateQty(sellQty, qtyDecClose),
         });
 
         if (closeResult.retCode !== 0) {
@@ -1687,9 +1711,10 @@ async function executeTrades(
       // Bug #1 fix: Place server-side conditional SL on Bybit immediately after buy.
       // This fires even if the cron is delayed, not relying on 5-min polling.
       try {
+        const slQtyDec = await getQtyPrecision(client, sig.symbol);
         const slResult = await client.submitOrder({
           category: 'spot', symbol: `${sig.symbol}USDT`, side: 'Sell',
-          orderType: 'Market', qty: String(fillQty),
+          orderType: 'Market', qty: truncateQty(fillQty, slQtyDec),
           triggerPrice: String(stopLoss),
           triggerDirection: 2, // 2 = triggers when price falls AT or BELOW triggerPrice
           orderFilter: 'tpslOrder',
@@ -1793,8 +1818,9 @@ async function emergencyCloseAll(
         emergencySellQty = Math.min(pos.qty, totalQty);
       } catch {}
 
+      const emQtyDec = await getQtyPrecision(client, pos.symbol);
       const sellResult = await client.submitOrder({
-        category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(emergencySellQty),
+        category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: truncateQty(emergencySellQty, emQtyDec),
       });
 
       if (sellResult.retCode !== 0) {
@@ -1864,8 +1890,9 @@ async function checkAndCloseDcaStacks(
       }
 
       if (shouldClose) {
+        const dcaQtyDec = await getQtyPrecision(client, stack.symbol);
         const dcaCloseResult = await client.submitOrder({
-          category: 'spot', symbol: `${stack.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(stack.totalQty),
+          category: 'spot', symbol: `${stack.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: truncateQty(stack.totalQty, dcaQtyDec),
         });
 
         if (dcaCloseResult.retCode !== 0) {
@@ -2226,8 +2253,9 @@ export default async function handler(req: any, res: any) {
           currentPrice = parseFloat((tickerRes.result.list[0] as any).lastPrice || '0');
       } catch {}
 
+      const manualQtyDec = await getQtyPrecision(client, pos.symbol);
       const sellResult = await client.submitOrder({
-        category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(pos.qty),
+        category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: truncateQty(pos.qty, manualQtyDec),
       });
 
       if (sellResult.retCode !== 0) {
@@ -2283,7 +2311,8 @@ export default async function handler(req: any, res: any) {
           currentPrice = parseFloat((tickerRes.result.list[0] as any).lastPrice || '0');
       } catch {}
 
-      const dcaSellResult = await client.submitOrder({ category: 'spot', symbol: `${stack.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: String(stack.totalQty) });
+      const dcaManualQtyDec = await getQtyPrecision(client, stack.symbol);
+      const dcaSellResult = await client.submitOrder({ category: 'spot', symbol: `${stack.symbol}USDT`, side: 'Sell', orderType: 'Market', qty: truncateQty(stack.totalQty, dcaManualQtyDec) });
 
       if (dcaSellResult.retCode !== 0) {
         return res.status(500).json({ error: `Sell order failed: ${dcaSellResult.retMsg}` });
@@ -2456,9 +2485,10 @@ export default async function handler(req: any, res: any) {
       // Place server-side SL orders on Bybit for each re-synced position
       for (const pos of state.positions.filter(p => p.status === 'open' && p.id.startsWith('resync_'))) {
         try {
+          const rsQtyDec = await getQtyPrecision(client, pos.symbol);
           const slResult = await client.submitOrder({
             category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell',
-            orderType: 'Market', qty: String(pos.qty),
+            orderType: 'Market', qty: truncateQty(pos.qty, rsQtyDec),
             triggerPrice: String(pos.stopLoss),
             triggerDirection: 2,
             orderFilter: 'tpslOrder',
@@ -2495,20 +2525,27 @@ export default async function handler(req: any, res: any) {
             }
           } catch {}
         }
+        let slStatus = 'NO-CLIENT';
         if (client) {
           try {
+            const rlQtyDec = await getQtyPrecision(client, pos.symbol);
             const slResult = await client.submitOrder({
               category: 'spot', symbol: `${pos.symbol}USDT`, side: 'Sell',
-              orderType: 'Market', qty: String(pos.qty),
+              orderType: 'Market', qty: truncateQty(pos.qty, rlQtyDec),
               triggerPrice: String(pos.stopLoss),
               triggerDirection: 2,
               orderFilter: 'tpslOrder',
             });
-            if (slResult.retCode === 0) pos.slOrderId = slResult.result?.orderId;
-          } catch {}
+            if (slResult.retCode === 0) {
+              pos.slOrderId = slResult.result?.orderId;
+              slStatus = 'OK';
+            } else {
+              slStatus = `FAIL:${slResult.retMsg}`;
+            }
+          } catch (e: any) { slStatus = `ERR:${e.message}`; }
         }
 
-        results.push(`${pos.symbol}: SL ${oldSL} → ${pos.stopLoss} (-${config.stopLossPercent}%) | TP ${pos.takeProfit} (+${config.takeProfitPercent}%)`);
+        results.push(`${pos.symbol}: SL ${oldSL} → ${pos.stopLoss} (-${config.stopLossPercent}%) | TP ${pos.takeProfit} (+${config.takeProfitPercent}%) | SL-ORDER: ${slStatus}`);
       }
 
       await saveState(state);
